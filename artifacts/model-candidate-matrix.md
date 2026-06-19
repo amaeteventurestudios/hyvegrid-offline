@@ -53,7 +53,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 6 | DeepSeek-R1-Distill-Qwen-1.5B | DeepSeek/Qwen | 1.5B | Yes | bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF:Q4_K_M | DeepSeek model license, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 5.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 0.5 | TBD | Low | Failed Prompt 1 with visible reasoning and hallucinated beekeeping guidance | TBD | No | Output showed reasoning text, hallucinated sperm/oocysts and air filtering, missed core hive-health checks and immediate avoid guidance. See run log. | Do not continue unless doing one controlled no-reasoning recovery test |
 | 7 | Qwen3-1.7B | Qwen | 1.7B | Yes | enacimie/Qwen3-1.7B-Q4_K_M-GGUF:Q4_K_M | Apache 2.0, verify source model license before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 3.7 to 6.2 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 1.0 | TBD | Low | Raw prompt triggered visible thinking. Controlled prompt gave a short but weak answer | TBD | No | Raw prompt entered visible thinking mode. Controlled /no_think prompt avoided reasoning but gave poor advice focused on hive board damage and hive mud. Missed ants, colony strength, brood, food, water, queen-right signs, harvest caution, and chemical caution. See run log. | Reject for now | | Decision | Reject for now |
 | 8 | Granite-3.3-2B-Instruct | Granite | 2B | Yes | ibm-granite/granite-3.3-2b-instruct-GGUF:Q4_K_M | Apache 2.0, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 2.7 to 3.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Clean but incomplete hive-health answer | Relevant site-readiness answer, but missed density and spray coordination | Maybe / yes | Prompt 1 covered queen health and disturbance caution but missed ant entry, colony strength, food/water stress, brood detail, and harvest/chemical caution. Prompt 2 covered pesticide risk, safe distance, forage availability, water, terrain, shade, and predators, but missed spray timing, dry-season water backup, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. See run log. | Keep as balanced backup. Compare against Gemma after profiler || Prompt 2 score | 3.0 / 5 |
-| 9 | Phi-4-mini-instruct | Phi | 3.84B | Yes | bartowski/microsoft_Phi-4-mini-instruct-GGUF:Q4_K_M | Microsoft license, verify before lock | Conditional | Q4_K_M | TBD | 2048 | TBD | 2.0 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | TBD | Medium | Relevant but incomplete hive-health answer, did not beat Gemma | TBD | Maybe | Prompt 1 covered ants, queen health, brood disease, pests, ventilation, and hive space. It missed colony strength, food stores, water stress, ant entry, harvest caution, chemical caution, and clear avoid-immediately guidance. Slow for its size. See run log. | Retest with Prompt 2 only for completeness |
+| 9 | Phi-4-mini-instruct | Phi | 3.84B | Yes | bartowski/microsoft_Phi-4-mini-instruct-GGUF:Q4_K_M | Microsoft license, verify before lock | Conditional | Q4_K_M | TBD | 2048 | TBD | 2.0 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Relevant but incomplete hive-health answer, did not beat Gemma | Relevant site-readiness answer, but missed density, spray coordination, and safety specifics | Maybe / yes | Prompt 1 covered ants, queen health, brood disease, pests, ventilation, and hive space but missed key avoid guidance. Prompt 2 covered pesticides, forage, blooming periods, water, habitat, land use, pollen/nectar quality, and pest pressure, but missed spray timing, dry-season water plan, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. Slow for its size. See run log. | Do not lock. Keep as record only | Prompt 2 score | 3.0 / 5 |
 
 ---
 
@@ -440,6 +440,19 @@ Notes:
 - It did not clearly warn against immediate harvest or blind chemical treatment.
 - It began moving toward treatment advice before confirming the problem, which is risky for field guidance.
 - The model is heavier and slower than the current leader, so Prompt 1 does not justify locking it.
+
+Prompt 2 notes:
+
+- The model gave a relevant site-readiness answer.
+- It covered pesticide use, pesticide frequency, crop diversity, forage availability, blooming periods, water proximity, contamination/runoff risk, wildflowers, shrubs, trees, land-use practices, pollen/nectar quality, and pest/disease pressure.
+- It did not clearly address spray timing coordination with pepper and vegetable farmers.
+- It did not explain the dry-season risk of relying on a seasonal water source.
+- It did not evaluate whether the site can support 20 hives.
+- It missed hive density, overstocking risk, and staged placement.
+- It missed crop-specific forage detail: mango as seasonal forage, cassava as limited forage, and pepper/vegetables as higher pesticide-risk crops.
+- It missed safe distance from homes, schools, roads, paths, and livestock.
+- It missed inspection and harvest access.
+- The answer was decent, but not strong enough to justify the heavier model.
 
 ## Lock criteria
 
