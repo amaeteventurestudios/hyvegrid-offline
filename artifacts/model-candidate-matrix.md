@@ -49,7 +49,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 4 | Gemma-2-2B-it | Gemma | 2B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
-| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
+| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | TBD | Medium | Generic and incomplete | TBD | Maybe | Prompt 1 missed ants entering hive, colony strength, food/water stress, harvest caution, chemical caution, and careful inspection. See run log. | Retest with Prompt 2 |
 
 ---
 
@@ -187,6 +187,32 @@ Notes:
 - It incorrectly suggested avoiding opening the hive, using a smoker, or using a hive tool.
 - Better guidance would be to inspect carefully and avoid disturbing the colony aggressively.
 - Current result is usable but not strong enough to lock.
+
+### Candidate run: SmolLM2-1.7B-Instruct Q4_K_M
+
+| Item | Value |
+|---|---|
+| Date tested | 2026-06-18 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | bartowski/SmolLM2-1.7B-Instruct-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
+| Peak RAM | TBD |
+| TPS | Prompt processing: 20.5 t/s. Generation: 3.4 t/s. Local Mac result only, not final profiler. |
+| First-token latency | TBD |
+| Profiler output path | TBD |
+| Prompt 1 score | 2.0 / 5 |
+| Prompt 2 score | TBD |
+| Agriculture validation score | TBD |
+| Decision | Retest with Prompt 2 |
+
+Notes:
+
+- The model gave a generic answer focused on disease, queen presence, and temperature/humidity.
+- It did not specifically address ants entering the hive or ant pressure.
+- It missed colony strength, food stores, water stress, brood pattern detail, harvest caution, chemical caution, and careful physical inspection.
+- It gave weak avoidance guidance by saying not to add more bees or honey.
+- Current result is weaker than Qwen2.5 on Prompt 1.
 
 ---
 
