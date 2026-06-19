@@ -45,7 +45,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 
 | # | Candidate model | Model family | Params | Instruct tuned? | GGUF source URL | License | License cleared? | Quantization tested | File size | Context used | Peak RAM GB | TPS | First-token latency | OOM/crash? | Thermal flag? | ADTC profiler passed? | Agriculture validation score | Prompt 1 score | Prompt 2 score | Caution language quality | Apiculture reasoning quality | Site-readiness reasoning quality | Fine-tune needed? | Notes | Decision |
 |---|---|---|---:|---|---|---|---|---|---:|---:|---:|---:|---:|---|---|---|---:|---:|---:|---|---|---|---|---|---|
-| 1 | Qwen2.5-1.5B-Instruct | Qwen | 1.5B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
+| 1 | Qwen2.5-1.5B-Instruct | Qwen | 1.5B | Yes | Qwen/Qwen2.5-1.5B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 4.9 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.5 | TBD | Medium | Basic but incomplete | TBD | Maybe | Prompt 1 missed key field checks. See run log. | Retest with Prompt 2 |
 | 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 4 | Gemma-2-2B-it | Gemma | 2B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
@@ -162,27 +162,31 @@ Use a 0 to 5 score.
 
 Use this section after each candidate test.
 
-### Candidate run: TBD
+### Candidate run: Qwen2.5-1.5B-Instruct Q4_K_M
 
 | Item | Value |
 |---|---|
-| Date tested | TBD |
-| Machine/profile | TBD |
-| Model | TBD |
-| Quantization | TBD |
-| Command used | TBD |
+| Date tested | 2026-06-18 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | Qwen/Qwen2.5-1.5B-Instruct-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf Qwen/Qwen2.5-1.5B-Instruct-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
 | Peak RAM | TBD |
-| TPS | TBD |
+| TPS | Prompt processing: 32.3 t/s. Generation: 4.9 t/s. Local Mac result only, not final profiler. |
 | First-token latency | TBD |
 | Profiler output path | TBD |
-| Prompt 1 score | TBD |
+| Prompt 1 score | 2.5 / 5 |
 | Prompt 2 score | TBD |
 | Agriculture validation score | TBD |
-| Decision | TBD |
+| Decision | Retest with Prompt 2 |
 
 Notes:
 
-- TBD
+- The model gave a structured answer and noticed ants, smell, and partially capped brood.
+- It missed colony strength, food stores, water stress, harvest caution, chemical caution, and careful physical inspection.
+- It incorrectly suggested avoiding opening the hive, using a smoker, or using a hive tool.
+- Better guidance would be to inspect carefully and avoid disturbing the colony aggressively.
+- Current result is usable but not strong enough to lock.
 
 ---
 
