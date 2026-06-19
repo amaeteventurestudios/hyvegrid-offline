@@ -466,6 +466,29 @@ After first-bracket and second-bracket testing, the strongest candidates are:
 
 Next decision depends on ADTC profiler results, not local Mac speed alone.
 
+## Local model path smoke test
+
+| Item | Result |
+|---|---|
+| Date tested | 2026-06-19 |
+| Selected test model | Gemma-2-2B-it Q4_K_M |
+| Local model path | `model/hyvegrid-offline.gguf` |
+| File size | 1.6 GB |
+| Git tracking check | Passed. `git status` showed clean working tree. |
+| Prompt 1 local path run | Passed |
+| Prompt 2 local path run | Passed |
+| Prompt 1 local path score | 3.0 / 5 |
+| Prompt 2 local path score | 3.0 / 5 |
+| Decision | Local model slot validated. Ready for profiler testing. |
+
+Notes:
+
+- The model successfully ran from `model/hyvegrid-offline.gguf`.
+- This confirms the repo can point to one selected offline GGUF model.
+- The model file is ignored by Git and was not committed.
+- Local Mac results are smoke-test results only, not final ADTC profiler results.
+
+
 ## Lock criteria
 
 Do not lock the scoring model until all of these are true:
