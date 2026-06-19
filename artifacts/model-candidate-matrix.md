@@ -52,6 +52,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |Prompt 2 score | 2.5 / 5 |
 | 6 | DeepSeek-R1-Distill-Qwen-1.5B | DeepSeek/Qwen | 1.5B | Yes | bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF:Q4_K_M | DeepSeek model license, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 5.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 0.5 | TBD | Low | Failed Prompt 1 with visible reasoning and hallucinated beekeeping guidance | TBD | No | Output showed reasoning text, hallucinated sperm/oocysts and air filtering, missed core hive-health checks and immediate avoid guidance. See run log. | Do not continue unless doing one controlled no-reasoning recovery test |
 | 7 | Qwen3-1.7B | Qwen | 1.7B | Yes | enacimie/Qwen3-1.7B-Q4_K_M-GGUF:Q4_K_M | Apache 2.0, verify source model license before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 3.7 to 6.2 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 1.0 | TBD | Low | Raw prompt triggered visible thinking. Controlled prompt gave a short but weak answer | TBD | No | Raw prompt entered visible thinking mode. Controlled /no_think prompt avoided reasoning but gave poor advice focused on hive board damage and hive mud. Missed ants, colony strength, brood, food, water, queen-right signs, harvest caution, and chemical caution. See run log. | Reject for now | | Decision | Reject for now |
+| 8 | Granite-3.3-2B-Instruct | Granite | 2B | Yes | ibm-granite/granite-3.3-2b-instruct-GGUF:Q4_K_M | Apache 2.0, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 2.7 to 3.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Clean but incomplete hive-health answer | Relevant site-readiness answer, but missed density and spray coordination | Maybe / yes | Prompt 1 covered queen health and disturbance caution but missed ant entry, colony strength, food/water stress, brood detail, and harvest/chemical caution. Prompt 2 covered pesticide risk, safe distance, forage availability, water, terrain, shade, and predators, but missed spray timing, dry-season water backup, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. See run log. | Keep as balanced backup. Compare against Gemma after profiler || Prompt 2 score | 3.0 / 5 |
 
 ---
 
@@ -368,6 +369,47 @@ Controlled recovery test:
 - It focused on hive board or entrance damage and mentioned hive mud.
 - It still missed ants entering the hive, colony strength, food stores, water stress, brood pattern, queen-right signs, harvest caution, chemical caution, and careful inspection.
 - Controlled recovery result does not save the model.
+
+### Candidate run: Granite-3.3-2B-Instruct Q4_K_M
+
+| Item | Value |
+|---|---|
+| Date tested | 2026-06-19 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | ibm-granite/granite-3.3-2b-instruct-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf ibm-granite/granite-3.3-2b-instruct-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
+| Peak RAM | TBD |
+| TPS | Prompt processing: 23.3 t/s. Generation: 2.7 t/s. Local Mac result only, not final profiler. |
+| First-token latency | TBD |
+| Profiler output path | TBD |
+| Prompt 1 score | 3.0 / 5 |
+| Prompt 2 score | TBD |
+| Agriculture validation score | TBD |
+| Decision | Retest with Prompt 2 |
+
+Notes:
+
+- The model gave a clean but incomplete hive-health answer.
+- It prioritized queen presence and queen health.
+- It correctly warned against excessive disturbance.
+- It warned against adding sugar syrup or introducing new bees without expert guidance.
+- It mentioned temperature and humidity.
+- It missed checking whether ants are entering the hive.
+- It missed colony strength, adult bee population, food stores, water stress, brood pattern detail, immediate harvest caution, blind chemical-treatment caution, and careful inspection wording.
+- It weakly connected ants to Varroa or parasitic mites instead of first treating them as ant pressure or a hive-stand protection issue.
+
+Prompt 2 notes:
+
+- The model gave a relevant site-readiness answer.
+- It covered pesticide residue risk, safe distance from farms, forage availability, forage diversity, seasonal water, water contamination, terrain, sun exposure, shade, temperature protection, and predators.
+- It did not clearly address spray timing coordination with pepper and vegetable farmers.
+- It did not explain the dry-season risk of relying on a seasonal water source.
+- It did not evaluate whether the site can support 20 hives.
+- It missed hive density, overstocking risk, and staged placement.
+- It missed crop-specific forage detail: mango as seasonal forage, cassava as limited forage, and pepper/vegetables as higher pesticide-risk crops.
+- It missed safe distance from homes, schools, roads, paths, and livestock.
+- It missed inspection and harvest access.
 
 ## Lock criteria
 
