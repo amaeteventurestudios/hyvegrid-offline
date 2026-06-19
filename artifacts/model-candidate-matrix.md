@@ -454,6 +454,18 @@ Prompt 2 notes:
 - It missed inspection and harvest access.
 - The answer was decent, but not strong enough to justify the heavier model.
 
+## Finalist profiler decision
+
+After first-bracket and second-bracket testing, the strongest candidates are:
+
+| Rank | Model | Role | Reason |
+|---:|---|---|---|
+| 1 | Gemma-2-2B-it Q4_K_M | Accuracy candidate | Best content quality across the two ADTC prompts so far |
+| 2 | Granite-3.3-2B-Instruct Q4_K_M | Balanced backup | More consistent than most models, likely better license/compliance posture |
+| 3 | Llama-3.2-1B-Instruct Q4_K_M | Speed baseline | Fastest usable candidate but weak on site-readiness |
+
+Next decision depends on ADTC profiler results, not local Mac speed alone.
+
 ## Lock criteria
 
 Do not lock the scoring model until all of these are true:
