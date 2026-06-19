@@ -46,8 +46,8 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | # | Candidate model | Model family | Params | Instruct tuned? | GGUF source URL | License | License cleared? | Quantization tested | File size | Context used | Peak RAM GB | TPS | First-token latency | OOM/crash? | Thermal flag? | ADTC profiler passed? | Agriculture validation score | Prompt 1 score | Prompt 2 score | Caution language quality | Apiculture reasoning quality | Site-readiness reasoning quality | Fine-tune needed? | Notes | Decision |
 |---|---|---|---:|---|---|---|---|---|---:|---:|---:|---:|---:|---|---|---|---:|---:|---:|---|---|---|---|---|---|
 | 1 | Qwen2.5-1.5B-Instruct | Qwen | 1.5B | Yes | Qwen/Qwen2.5-1.5B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 4.1 to 4.9 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.5 | 1.5 | Medium | Basic but incomplete | Weak and generic | Maybe | Prompt 1 was incomplete. Prompt 2 missed pesticide risk, water reliability, forage calendar, hive density, and site-safety specifics. See run log. | Retest / compare next model |
-| 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
-| 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
+| 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 4.0 to 7.6 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 1.0 | Medium | Best Prompt 1 so far, but missed ants and water stress | Failed site-readiness reasoning | Yes / maybe | Prompt 1 was strongest so far. Prompt 2 misunderstood the site-readiness question and focused on human water-borne disease, soil, and crop water use instead of pesticide risk, forage, seasonal water, hive density, and site safety. See run log. | Do not lock. Compare next model | Prompt 2 score | 1.0 / 5 |
+| 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 2.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.5 | TBD | Medium | Over-focused on humidity/ventilation, missed colony strength and food/water stress | TBD | Maybe | Prompt 1 was slower and not better than Llama 1B. It mentioned ventilation, ants, brood nest, and odors, but missed core hive-health checks and gave treatment-like advice before inspection. See run log. | Retest with Prompt 2 only if needed |
 | 4 | Gemma-2-2B-it | Gemma | 2B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |Prompt 2 score | 2.5 / 5 |
 
@@ -225,6 +225,71 @@ Prompt 2 notes:
 - It missed shade, wind, heat, drainage, livestock, roads, footpaths, and harvest access.
 - It incorrectly mentioned natural nesting sites, which is not the core issue for managed hive placement.
 - Current result is useful but too shallow to lock.
+
+### Candidate run: Llama-3.2-1B-Instruct Q4_K_M
+
+| Item | Value |
+|---|---|
+| Date tested | 2026-06-19 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
+| Peak RAM | TBD |
+| TPS | Prompt processing: 42.6 t/s. Generation: 7.6 t/s. Local Mac result only, not final profiler. |
+| First-token latency | TBD |
+| Profiler output path | TBD |
+| Prompt 1 score | 3.5 / 5 |
+| Prompt 2 score | TBD |
+| Agriculture validation score | TBD |
+| Decision | Retest with Prompt 2 |
+
+Notes:
+
+- This is the best Prompt 1 answer so far.
+- The model covered ventilation, honey stores, brood/queen condition, pollen and nectar stores, and chemical-treatment caution.
+- It missed the ant-pressure detail and did not clearly say to check whether ants are entering the hive.
+- It missed colony strength, adult bee population, water stress, and immediate harvest caution.
+- It gave somewhat awkward wording about not opening or inspecting too quickly. Better guidance would be careful physical inspection without aggressive disturbance.
+- Current result is promising enough to continue to Prompt 2.
+
+Prompt 2 notes:
+
+- The model misunderstood the prompt.
+- It focused on water-borne human diseases such as malaria, typhoid, and schistosomiasis.
+- It discussed crop water requirements and soil quality instead of apiary siting.
+- It missed pesticide and spray timing risk from pepper and vegetable farms.
+- It missed seasonal water reliability for bees.
+- It missed forage diversity, flowering calendar, and whether the site can support 20 hives.
+- It missed shade, wind, heat, drainage, livestock, roads, footpaths, and inspection/harvest access.
+- Current result is not strong enough to lock.
+
+### Candidate run: Llama-3.2-3B-Instruct Q4_K_M
+
+| Item | Value |
+|---|---|
+| Date tested | 2026-06-19 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
+| Peak RAM | TBD |
+| TPS | Prompt processing: 10.0 t/s. Generation: 2.1 t/s. Local Mac result only, not final profiler. |
+| First-token latency | TBD |
+| Profiler output path | TBD |
+| Prompt 1 score | 2.5 / 5 |
+| Prompt 2 score | TBD |
+| Agriculture validation score | TBD |
+| Decision | Retest with Prompt 2 only if needed |
+
+Notes:
+
+- The model over-focused on humidity and ventilation.
+- It mentioned ants, brood nest, odors, and monitoring activity.
+- It missed colony strength, adult bee population, food stores, water stress, queen-right signs, and immediate harvest caution.
+- It suggested dust or powder treatment for ants before fully prioritizing inspection.
+- It was much slower than Llama 3.2 1B on the local iMac test.
+- Current result does not justify the larger model size.
 
 ---
 
