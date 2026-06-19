@@ -1,0 +1,61 @@
+{
+  "submission_name": "HyveGrid Offline",
+  "challenge": "Africa Deep Tech Challenge 2026",
+  "track": "Laptop LLM",
+  "domain": "agriculture",
+  "project_type": "offline_apiculture_intelligence_assistant",
+  "description": "HyveGrid Offline is a local AI field assistant for African beekeeping operations. It helps beekeepers and extension workers reason through hive health, site readiness, honey quality, forage, pollination, and simple hive signal patterns without cloud access.",
+  "budget_laptop_claim": true,
+  "offline_required": true,
+  "cloud_dependencies": false,
+  "runtime": {
+    "engine": "llama.cpp",
+    "model_format": "GGUF",
+    "model_path": "model/hyvegrid-offline.gguf",
+    "inference_mode": "local_offline"
+  },
+  "_runtime": {
+    "engine": "llama.cpp",
+    "model_format": "GGUF",
+    "model_path": "model/hyvegrid-offline.gguf"
+  },
+  "model": {
+    "name": "TBD",
+    "base_model": "TBD",
+    "parameter_count": "TBD",
+    "quantization": "TBD",
+    "license": "TBD",
+    "status": "candidate_selection_not_locked"
+  },
+  "language_scope": ["en", "yo"],
+  "primary_evaluation_language": "en",
+  "african_language_support": {
+    "language": "yo",
+    "language_name": "Yoruba",
+    "strategy": "controlled_templates_and_structured_field_flow"
+  },
+  "cross_disciplinary_pairing": {
+    "load_bearing": true,
+    "description": "HyveGrid Offline combines apiculture field reasoning, offline small-model inference, public knowledge grounding, and simple manual or sample edge-signal inputs for hive and site decision support."
+  },
+  "ip_boundary": {
+    "public_challenge_edition": true,
+    "excludes": [
+      "proprietary hardware plans",
+      "sensor IP",
+      "private datasets",
+      "commercial roadmap",
+      "Honey Flow Africa internal strategy",
+      "partner or investor materials",
+      "API keys or credentials"
+    ]
+  },
+  "test_prompts": [
+    "A beekeeper reports low hive activity, ants near the hive stand, normal smell, and partially capped brood. What should they check first, and what should they avoid doing immediately?",
+    "An extension worker wants to place 20 hives near cassava, mango, pepper, and vegetable farms with a seasonal water source nearby. What site risks and forage factors should they evaluate before placing the hives?"
+  ],
+  "notes": [
+    "This metadata file is a starter draft and will be aligned to the official ADTC template before submission.",
+    "The final model fields will be filled only after candidate benchmarking and profiler runs."
+  ]
+}

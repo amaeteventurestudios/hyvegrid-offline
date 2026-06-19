@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# Model weights
+model/
+*.gguf
+*.bin
+*.safetensors
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Benchmark artifacts
+artifacts/*.json
+artifacts/*.log
+
+# Editor
+.vscode/
+.idea/
