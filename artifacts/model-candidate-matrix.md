@@ -51,6 +51,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 4 | Gemma-2-2B-it | Gemma | 2B | Yes | bartowski/gemma-2-2b-it-GGUF:Q4_K_M | Gemma license | Conditional | Q4_K_M | TBD | 2048 | TBD | 1.5 to 2.9 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 3.0 | Medium-good | Stronger ants and brood reasoning, but too broad on avoiding hive opening | Better site-readiness answer, but missed crop-specific forage and 20-hive density | Maybe / yes | Best first-bracket accuracy so far. Prompt 1 handled ants and brood better than most candidates. Prompt 2 covered pesticides, herbicides, seasonal water reliability, water quality, traffic, livestock, wind, and drainage, but missed spray timing, forage calendar, crop-specific forage limits, safe distance, access, and staged placement. Slow generation. See run log. | Keep as first-bracket accuracy candidate. Compare DeepSeek/Qwen3/Granite next |
 | 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |Prompt 2 score | 2.5 / 5 |
 | 6 | DeepSeek-R1-Distill-Qwen-1.5B | DeepSeek/Qwen | 1.5B | Yes | bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF:Q4_K_M | DeepSeek model license, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 5.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 0.5 | TBD | Low | Failed Prompt 1 with visible reasoning and hallucinated beekeeping guidance | TBD | No | Output showed reasoning text, hallucinated sperm/oocysts and air filtering, missed core hive-health checks and immediate avoid guidance. See run log. | Do not continue unless doing one controlled no-reasoning recovery test |
+| 7 | Qwen3-1.7B | Qwen | 1.7B | Yes | enacimie/Qwen3-1.7B-Q4_K_M-GGUF:Q4_K_M | Apache 2.0, verify source model license before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 3.7 to 6.2 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 1.0 | TBD | Low | Raw prompt triggered visible thinking. Controlled prompt gave a short but weak answer | TBD | No | Raw prompt entered visible thinking mode. Controlled /no_think prompt avoided reasoning but gave poor advice focused on hive board damage and hive mud. Missed ants, colony strength, brood, food, water, queen-right signs, harvest caution, and chemical caution. See run log. | Reject for now | | Decision | Reject for now |
 
 ---
 
@@ -332,6 +333,41 @@ Notes:
 - It missed ant entry checks, colony strength, food stores, water stress, queen-right signs, harvest caution, chemical caution, and careful inspection guidance.
 - The speed was good, but the answer quality was not acceptable.
 ---
+
+### Candidate run: Qwen3-1.7B Q4_K_M
+
+| Item | Value |
+|---|---|
+| Date tested | 2026-06-19 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | enacimie/Qwen3-1.7B-Q4_K_M-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf enacimie/Qwen3-1.7B-Q4_K_M-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
+| Peak RAM | TBD |
+| TPS | Prompt processing: 25.1 t/s. Generation: 3.7 t/s. Local Mac result only, not final profiler. |
+| First-token latency | TBD |
+| Profiler output path | TBD |
+| Prompt 1 score | 1.0 / 5 |
+| Prompt 2 score | TBD |
+| Agriculture validation score | TBD |
+| Decision | Run one no-thinking recovery test before rejecting |
+
+Notes:
+
+- The model entered visible thinking mode instead of giving a direct field answer.
+- It noticed low hive activity, ants, partially capped brood, and possible forage/food issues.
+- It did not clearly answer what to check first or what to avoid doing immediately.
+- It missed ant entry checks, colony strength, food stores, water stress, queen-right signs, harvest caution, chemical caution, and careful inspection guidance.
+- Current raw-prompt result is not acceptable.
+
+Controlled recovery test:
+
+- Command/control used: `/no_think` plus English-only direct-answer instruction.
+- The model stopped showing visible reasoning.
+- The answer was too short and missed the main beekeeping checks.
+- It focused on hive board or entrance damage and mentioned hive mud.
+- It still missed ants entering the hive, colony strength, food stores, water stress, brood pattern, queen-right signs, harvest caution, chemical caution, and careful inspection.
+- Controlled recovery result does not save the model.
 
 ## Lock criteria
 
