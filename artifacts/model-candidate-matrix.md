@@ -50,6 +50,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 1.9 to 2.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.5 | 2.5 | Medium | Over-focused on humidity/ventilation, missed colony strength and food/water stress | Partly relevant but incomplete | Maybe / yes | Prompt 1 was slower and not better than Llama 1B. Prompt 2 mentioned pesticide, herbicide, flood risk, forage, and climate, but missed spray timing, seasonal water reliability, 20-hive density, safety, access, and crop-specific forage detail. See run log. | Do not lock. Compare next model |
 | 4 | Gemma-2-2B-it | Gemma | 2B | Yes | bartowski/gemma-2-2b-it-GGUF:Q4_K_M | Gemma license | Conditional | Q4_K_M | TBD | 2048 | TBD | 1.5 to 2.9 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 3.0 | Medium-good | Stronger ants and brood reasoning, but too broad on avoiding hive opening | Better site-readiness answer, but missed crop-specific forage and 20-hive density | Maybe / yes | Best first-bracket accuracy so far. Prompt 1 handled ants and brood better than most candidates. Prompt 2 covered pesticides, herbicides, seasonal water reliability, water quality, traffic, livestock, wind, and drainage, but missed spray timing, forage calendar, crop-specific forage limits, safe distance, access, and staged placement. Slow generation. See run log. | Keep as first-bracket accuracy candidate. Compare DeepSeek/Qwen3/Granite next |
 | 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |Prompt 2 score | 2.5 / 5 |
+| 6 | DeepSeek-R1-Distill-Qwen-1.5B | DeepSeek/Qwen | 1.5B | Yes | bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF:Q4_K_M | DeepSeek model license, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 5.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 0.5 | TBD | Low | Failed Prompt 1 with visible reasoning and hallucinated beekeeping guidance | TBD | No | Output showed reasoning text, hallucinated sperm/oocysts and air filtering, missed core hive-health checks and immediate avoid guidance. See run log. | Do not continue unless doing one controlled no-reasoning recovery test |
 
 ---
 
@@ -305,6 +306,31 @@ Prompt 2 notes:
 - It did not recommend staged placement if the site is uncertain.
 - Generation speed was slow but better than Prompt 1.
 
+### Candidate run: DeepSeek-R1-Distill-Qwen-1.5B Q4_K_M
+
+| Item | Value |
+|---|---|
+| Date tested | 2026-06-19 |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Model | bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF |
+| Quantization | Q4_K_M |
+| Command used | `llama-cli -hf bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
+| Peak RAM | TBD |
+| TPS | Prompt processing: 27.0 t/s. Generation: 5.1 t/s. Local Mac result only, not final profiler. |
+| First-token latency | TBD |
+| Profiler output path | TBD |
+| Prompt 1 score | 0.5 / 5 |
+| Prompt 2 score | TBD |
+| Agriculture validation score | TBD |
+| Decision | Do not continue unless doing one controlled no-reasoning recovery test |
+
+Notes:
+
+- The model entered visible reasoning mode instead of giving a direct final answer.
+- It hallucinated inappropriate beekeeping details such as checking sperm and oocysts.
+- It suggested air filtering or dehumidifying around the hive, which is not practical field guidance.
+- It missed ant entry checks, colony strength, food stores, water stress, queen-right signs, harvest caution, chemical caution, and careful inspection guidance.
+- The speed was good, but the answer quality was not acceptable.
 ---
 
 ## Lock criteria
