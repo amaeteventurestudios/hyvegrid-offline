@@ -49,7 +49,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
 | 4 | Gemma-2-2B-it | Gemma | 2B | Yes | TBD | TBD | No | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Keep / Reject / Retest |
-| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | TBD | Medium | Generic and incomplete | TBD | Maybe | Prompt 1 missed ants entering hive, colony strength, food/water stress, harvest caution, chemical caution, and careful inspection. See run log. | Retest with Prompt 2 |
+| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |Prompt 2 score | 2.5 / 5 |
 
 ---
 
@@ -213,6 +213,18 @@ Notes:
 - It missed colony strength, food stores, water stress, brood pattern detail, harvest caution, chemical caution, and careful physical inspection.
 - It gave weak avoidance guidance by saying not to add more bees or honey.
 - Current result is weaker than Qwen2.5 on Prompt 1.
+
+Prompt 2 notes:
+
+- The model gave a general apiary site answer.
+- It mentioned agricultural chemicals, nectar and pollen availability, plant diversity, water, pests, and human activity.
+- It did not focus enough on the exact crop setting: cassava, mango, pepper, and vegetable farms.
+- It missed spray timing coordination with pepper and vegetable farmers.
+- It did not address that the water source is seasonal and may fail in the dry season.
+- It did not evaluate whether the site can support 20 hives.
+- It missed shade, wind, heat, drainage, livestock, roads, footpaths, and harvest access.
+- It incorrectly mentioned natural nesting sites, which is not the core issue for managed hive placement.
+- Current result is useful but too shallow to lock.
 
 ---
 
