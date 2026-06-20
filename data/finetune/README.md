@@ -1,0 +1,82 @@
+# HyveGrid Offline Fine-Tune Dataset
+
+## Purpose
+
+This folder contains the public, challenge-safe apiculture QA seed dataset for HyveGrid Offline.
+
+The dataset exists because Step 5 showed that the tested base models were not accurate enough on the official HyveGrid field prompts. The goal is to improve the model's own apiculture field reasoning before any app, RAG, Yoruba, or UI work begins.
+
+## Current file
+
+- apiculture_qa_seed.jsonl
+
+## Format
+
+Each row is JSONL with four required fields:
+
+Example:
+
+{"id":"example_id","category":"category_name","input":"field question","output":"expected cautious field answer"}
+
+Required fields:
+
+- id
+- category
+- input
+- output
+
+## Content scope
+
+Allowed content:
+
+- Public apiculture guidance.
+- Public extension-style field reasoning.
+- Manual observation scenarios.
+- Sample edge-signal style inputs.
+- Hive health, site readiness, harvest quality, forage, pollination, and pest-pressure examples.
+- Cautious next-step guidance.
+
+Excluded content:
+
+- Proprietary hardware plans.
+- Sensor IP.
+- Firmware strategy.
+- Private field records.
+- Honey Flow Africa internal strategy.
+- Partner strategy.
+- Commercial roadmap.
+- Investor materials.
+- Patent-sensitive claims.
+- Credentials or private data.
+
+## Answer style
+
+Answers should:
+
+- Start with cautious language such as "Possible concern."
+- Tell the user what to check first.
+- Include what to avoid doing immediately.
+- Recommend physical inspection where appropriate.
+- Avoid certified diagnosis claims.
+- Refer to an experienced beekeeper or extension officer when needed.
+
+## Validation
+
+Run:
+
+python3 scripts/validate_finetune_jsonl.py data/finetune/apiculture_qa_seed.jsonl
+
+Expected result:
+
+OK: 20 examples validated.
+
+## Current status
+
+This is a seed dataset for fine-tune preparation. It is not yet a final training set.
+
+Before fine-tuning, expand coverage, review for safety, and test whether a tuned candidate beats the Gemma and Granite baselines on:
+
+- The two official prompts.
+- The proxy validation prompt set.
+- Safety and caution language.
+- Profiler RAM and throughput constraints.
