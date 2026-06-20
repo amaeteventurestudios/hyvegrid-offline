@@ -38,8 +38,9 @@ def clean_llama_output(stdout: str) -> str:
     if not stdout:
         return ""
 
-    # Cut off the forced /exit section.
+    # Cut off forced interactive follow-up sections.
     stdout = stdout.split("> /exit", 1)[0]
+    stdout = stdout.split("\n>", 1)[0]
 
     cleaned_lines = []
     skip_prefixes = (
