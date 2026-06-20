@@ -34,10 +34,10 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | # | Candidate model | Model family | Params | Why consider | Main risk | Initial decision |
 |---|---|---|---:|---|---|---|
 | 1 | Qwen2.5-1.5B-Instruct | Qwen | 1.5B | Strong reasoning per parameter, widely available GGUF variants | Verify license and current GGUF source | Test |
-| 2 | Llama-3.2-1B-Instruct | Llama | 1B | Very low RAM and likely fast | May be weaker on agriculture/apiculture knowledge | Test |
+| 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 4.0 to 7.6 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 1.0 | Medium | Best Prompt 1 so far, but missed ants and water stress | Failed site-readiness reasoning | Yes / maybe | Prompt 1 was strongest so far. Prompt 2 misunderstood the site-readiness question and focused on human water-borne disease, soil, and crop water use instead of pesticide risk, forage, seasonal water, hive density, and site safety. See run log. | Do not lock. Compare next model |
 | 3 | Llama-3.2-3B-Instruct | Llama | 3B | Better reasoning and knowledge potential | May exceed the 2.5 GB target, must profile | Test only if smaller models are weak |
-| 4 | Gemma-2-2B-it | Gemma | 2B | Good quality for size | Borderline RAM target, license must be reviewed | Test |
-| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Small and capable | Agriculture performance unknown | Test |
+| 4 | Gemma-2-2B-it | Gemma | 2B | Yes | bartowski/gemma-2-2b-it-GGUF:Q4_K_M | Gemma license | Conditional | Q4_K_M | 1.6 GB | 2048 prompt tests / 8192 profiler report | 1.95 | 2.03 profiler smoke / 1.5 to 3.5 local prompt tests | 16,258.61 ms | No | No | Smoke passed, accuracy skipped | TBD | 3.5 | 3.0 | Medium-good | Stronger ants and brood reasoning, but too broad on avoiding hive opening | Better site-readiness answer, but missed crop-specific forage and 20-hive density | Maybe / yes | Best first-bracket accuracy so far. Profiler smoke passed with safe memory under 2 GB peak RSS, but generation TPS and first-token latency are weak. Compare Granite profiler before locking. | Keep as accuracy candidate. Compare Granite profiler before lock |
+| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |
 
 ---
 
@@ -46,15 +46,14 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | # | Candidate model | Model family | Params | Instruct tuned? | GGUF source URL | License | License cleared? | Quantization tested | File size | Context used | Peak RAM GB | TPS | First-token latency | OOM/crash? | Thermal flag? | ADTC profiler passed? | Agriculture validation score | Prompt 1 score | Prompt 2 score | Caution language quality | Apiculture reasoning quality | Site-readiness reasoning quality | Fine-tune needed? | Notes | Decision |
 |---|---|---|---:|---|---|---|---|---|---:|---:|---:|---:|---:|---|---|---|---:|---:|---:|---|---|---|---|---|---|
 | 1 | Qwen2.5-1.5B-Instruct | Qwen | 1.5B | Yes | Qwen/Qwen2.5-1.5B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 4.1 to 4.9 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.5 | 1.5 | Medium | Basic but incomplete | Weak and generic | Maybe | Prompt 1 was incomplete. Prompt 2 missed pesticide risk, water reliability, forage calendar, hive density, and site-safety specifics. See run log. | Retest / compare next model |
-| 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 4.0 to 7.6 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 1.0 | Medium | Best Prompt 1 so far, but missed ants and water stress | Failed site-readiness reasoning | Yes / maybe | Prompt 1 was strongest so far. Prompt 2 misunderstood the site-readiness question and focused on human water-borne disease, soil, and crop water use instead of pesticide risk, forage, seasonal water, hive density, and site safety. See run log. | Do not lock. Compare next model | Prompt 2 score | 1.0 / 5 |
+| 2 | Llama-3.2-1B-Instruct | Llama | 1B | Yes | hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 4.0 to 7.6 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 1.0 | Medium | Best Prompt 1 so far, but missed ants and water stress | Failed site-readiness reasoning | Yes / maybe | Prompt 1 was strongest so far. Prompt 2 misunderstood the site-readiness question and focused on human water-borne disease, soil, and crop water use instead of pesticide risk, forage, seasonal water, hive density, and site safety. See run log. | Do not lock. Compare next model |
 | 3 | Llama-3.2-3B-Instruct | Llama | 3B | Yes | hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF:Q4_K_M | Llama 3.2 Community License | Conditional | Q4_K_M | TBD | 2048 | TBD | 1.9 to 2.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.5 | 2.5 | Medium | Over-focused on humidity/ventilation, missed colony strength and food/water stress | Partly relevant but incomplete | Maybe / yes | Prompt 1 was slower and not better than Llama 1B. Prompt 2 mentioned pesticide, herbicide, flood risk, forage, and climate, but missed spray timing, seasonal water reliability, 20-hive density, safety, access, and crop-specific forage detail. See run log. | Do not lock. Compare next model |
-| 4 | Gemma-2-2B-it | Gemma | 2B | Yes | bartowski/gemma-2-2b-it-GGUF:Q4_K_M | Gemma license | Conditional | Q4_K_M | TBD | 2048 | TBD | 1.5 to 2.9 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.5 | 3.0 | Medium-good | Stronger ants and brood reasoning, but too broad on avoiding hive opening | Better site-readiness answer, but missed crop-specific forage and 20-hive density | Maybe / yes | Best first-bracket accuracy so far. Prompt 1 handled ants and brood better than most candidates. Prompt 2 covered pesticides, herbicides, seasonal water reliability, water quality, traffic, livestock, wind, and drainage, but missed spray timing, forage calendar, crop-specific forage limits, safe distance, access, and staged placement. Slow generation. See run log. | Keep as first-bracket accuracy candidate. Compare DeepSeek/Qwen3/Granite next |
-| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |Prompt 2 score | 2.5 / 5 |
+| 4 | Gemma-2-2B-it | Gemma | 2B | Yes | bartowski/gemma-2-2b-it-GGUF:Q4_K_M | Gemma license | Conditional | Q4_K_M | 1.6 GB | 2048 prompt tests / 8192 profiler report | 1.95 | 2.03 profiler smoke / 1.5 to 3.5 local prompt tests | 16,258.61 ms | No | No | Smoke passed, accuracy skipped | TBD | 3.5 | 3.0 | Medium-good | Stronger ants and brood reasoning, but too broad on avoiding hive opening | Better site-readiness answer, but missed crop-specific forage and 20-hive density | Maybe / yes | Best first-bracket accuracy so far. Profiler smoke passed with safe memory under 2 GB peak RSS, but generation TPS and first-token latency are weak. Compare Granite profiler before locking. | Keep as accuracy candidate. Compare Granite profiler before lock |
+| 5 | SmolLM2-1.7B-Instruct | SmolLM | 1.7B | Yes | bartowski/SmolLM2-1.7B-Instruct-GGUF:Q4_K_M | Apache 2.0 | Tentative yes | Q4_K_M | TBD | 2048 | TBD | 3.3 to 3.4 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 2.0 | 2.5 | Medium | Generic and incomplete | Useful but shallow | Maybe | Prompt 1 missed key hive-health checks. Prompt 2 mentioned chemicals, forage, and water, but missed crop-specific pesticide timing, seasonal water reliability, 20-hive density, and site-safety specifics. See run log. | Compare next model |
 | 6 | DeepSeek-R1-Distill-Qwen-1.5B | DeepSeek/Qwen | 1.5B | Yes | bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF:Q4_K_M | DeepSeek model license, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 5.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 0.5 | TBD | Low | Failed Prompt 1 with visible reasoning and hallucinated beekeeping guidance | TBD | No | Output showed reasoning text, hallucinated sperm/oocysts and air filtering, missed core hive-health checks and immediate avoid guidance. See run log. | Do not continue unless doing one controlled no-reasoning recovery test |
-| 7 | Qwen3-1.7B | Qwen | 1.7B | Yes | enacimie/Qwen3-1.7B-Q4_K_M-GGUF:Q4_K_M | Apache 2.0, verify source model license before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 3.7 to 6.2 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 1.0 | TBD | Low | Raw prompt triggered visible thinking. Controlled prompt gave a short but weak answer | TBD | No | Raw prompt entered visible thinking mode. Controlled /no_think prompt avoided reasoning but gave poor advice focused on hive board damage and hive mud. Missed ants, colony strength, brood, food, water, queen-right signs, harvest caution, and chemical caution. See run log. | Reject for now | | Decision | Reject for now |
-| 8 | Granite-3.3-2B-Instruct | Granite | 2B | Yes | ibm-granite/granite-3.3-2b-instruct-GGUF:Q4_K_M | Apache 2.0, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 2.7 to 3.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Clean but incomplete hive-health answer | Relevant site-readiness answer, but missed density and spray coordination | Maybe / yes | Prompt 1 covered queen health and disturbance caution but missed ant entry, colony strength, food/water stress, brood detail, and harvest/chemical caution. Prompt 2 covered pesticide risk, safe distance, forage availability, water, terrain, shade, and predators, but missed spray timing, dry-season water backup, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. See run log. | Keep as balanced backup. Compare against Gemma after profiler || Prompt 2 score | 3.0 / 5 |
-| 9 | Phi-4-mini-instruct | Phi | 3.84B | Yes | bartowski/microsoft_Phi-4-mini-instruct-GGUF:Q4_K_M | Microsoft license, verify before lock | Conditional | Q4_K_M | TBD | 2048 | TBD | 2.0 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Relevant but incomplete hive-health answer, did not beat Gemma | Relevant site-readiness answer, but missed density, spray coordination, and safety specifics | Maybe / yes | Prompt 1 covered ants, queen health, brood disease, pests, ventilation, and hive space but missed key avoid guidance. Prompt 2 covered pesticides, forage, blooming periods, water, habitat, land use, pollen/nectar quality, and pest pressure, but missed spray timing, dry-season water plan, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. Slow for its size. See run log. | Do not lock. Keep as record only | Prompt 2 score | 3.0 / 5 |
-
+| 7 | Qwen3-1.7B | Qwen | 1.7B | Yes | enacimie/Qwen3-1.7B-Q4_K_M-GGUF:Q4_K_M | Apache 2.0, verify source model license before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 3.7 to 6.2 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 1.0 | TBD | Low | Raw prompt triggered visible thinking. Controlled prompt gave a short but weak answer | TBD | No | Raw prompt entered visible thinking mode. Controlled /no_think prompt avoided reasoning but gave poor advice focused on hive board damage and hive mud. Missed ants, colony strength, brood, food, water, queen-right signs, harvest caution, and chemical caution. See run log. | Reject for now |
+| 8 | Granite-3.3-2B-Instruct | Granite | 2B | Yes | ibm-granite/granite-3.3-2b-instruct-GGUF:Q4_K_M | Apache 2.0, verify before lock | Tentative | Q4_K_M | TBD | 2048 | TBD | 2.7 to 3.1 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Clean but incomplete hive-health answer | Relevant site-readiness answer, but missed density and spray coordination | Maybe / yes | Prompt 1 covered queen health and disturbance caution but missed ant entry, colony strength, food/water stress, brood detail, and harvest/chemical caution. Prompt 2 covered pesticide risk, safe distance, forage availability, water, terrain, shade, and predators, but missed spray timing, dry-season water backup, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. See run log. | Keep as balanced backup. Compare against Gemma after profiler |
+| 9 | Phi-4-mini-instruct | Phi | 3.84B | Yes | bartowski/microsoft_Phi-4-mini-instruct-GGUF:Q4_K_M | Microsoft license, verify before lock | Conditional | Q4_K_M | TBD | 2048 | TBD | 2.0 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Relevant but incomplete hive-health answer, did not beat Gemma | Relevant site-readiness answer, but missed density, spray coordination, and safety specifics | Maybe / yes | Prompt 1 covered ants, queen health, brood disease, pests, ventilation, and hive space but missed key avoid guidance. Prompt 2 covered pesticides, forage, blooming periods, water, habitat, land use, pollen/nectar quality, and pest pressure, but missed spray timing, dry-season water plan, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. Slow for its size. See run log. | Do not lock. Keep as record only |
 ---
 
 ## Fields to record
@@ -273,18 +272,18 @@ Prompt 2 notes:
 | Item | Value |
 |---|---|
 | Date tested | 2026-06-19 |
-| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install |
+| Machine/profile | Amaete iMac, macOS, local llama.cpp Homebrew install, ADTC profiler smoke test |
 | Model | bartowski/gemma-2-2b-it-GGUF |
 | Quantization | Q4_K_M |
 | Command used | `llama-cli -hf bartowski/gemma-2-2b-it-GGUF:Q4_K_M -p "<Prompt 1>" -n 350 -c 2048 --temp 0.2` |
-| Peak RAM | TBD |
-| TPS | Prompt processing: 12.2 t/s. Generation: 1.5 t/s. Local Mac result only, not final profiler. |
-| First-token latency | TBD |
-| Profiler output path | TBD |
+| Peak RAM | Profiler smoke: 1,949 MB peak RSS |
+| TPS | Profiler smoke: 2.03 gen t/s; local prompt tests: 1.5 to 3.5 gen t/s |
+| First-token latency | 16,258.61 ms profiler smoke |
+| Profiler output path | artifacts/gemma-participant-smoke.json |
 | Prompt 1 score | 3.5 / 5 |
-| Prompt 2 score | TBD |
+| Prompt 2 score | 3.0 / 5 |
 | Agriculture validation score | TBD |
-| Decision | Retest with Prompt 2 |
+| Decision | Keep as accuracy candidate. Compare Granite profiler before lock |
 
 Notes:
 
@@ -488,6 +487,40 @@ Notes:
 - The model file is ignored by Git and was not committed.
 - Local Mac results are smoke-test results only, not final ADTC profiler results.
 
+## ADTC profiler smoke test: Gemma
+
+| Item | Result |
+|---|---|
+| Date tested | 2026-06-19 |
+| Profiler version | adtc-profiler 0.1.0 |
+| Mode | participant |
+| Accuracy skipped? | Yes |
+| Model path | `model.gguf` |
+| Model source | `model/hyvegrid-offline.gguf` symlinked to root `model.gguf` |
+| Model architecture | gemma2 |
+| Claimed params | 2B |
+| Context length reported | 8192 |
+| Generation TPS | 2.03 |
+| First-token latency | 16,258.61 ms |
+| Prompt tokens | 512 |
+| Generated tokens | 128 |
+| Peak RSS | 1,949 MB |
+| Steady-state RSS | 1,675.48 MB |
+| Peak VMS | 71,197.46 MB |
+| CPU p99 | 88% |
+| Thermal throttled | false |
+| Accuracy | Skipped |
+| Output file | `artifacts/gemma-participant-smoke.json` |
+| Decision | Memory looks safe. Speed and first-token latency are weak. Compare Granite before locking. |
+
+Notes:
+
+- This was measured on Amaete's iMac, not the ADTC Standard Laptop.
+- The profiler completed successfully and produced a schema-valid participant JSON.
+- Gemma stayed under 2 GB peak RSS in this smoke run.
+- Generation speed was only 2.03 tokens/sec.
+- First-token latency was high at 16.26 seconds.
+- Do not lock Gemma until Granite is profiled for comparison.
 
 ## Lock criteria
 
