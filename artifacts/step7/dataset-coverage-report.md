@@ -2,30 +2,34 @@
 
 ## Summary
 
-- Source examples: 40
-- Train examples: 36
-- Eval examples: 4
+- Source examples: 60
+- Train examples: 52
+- Eval examples: 8
 
 ## Category coverage
 
 | Category | Count |
 |---|---:|
-| forage_pollination | 4 |
+| agriculture_mcq | 4 |
+| forage_pollination | 5 |
+| general_agriculture | 6 |
 | harvest_quality | 6 |
 | hive_health | 9 |
 | hive_management | 2 |
 | hive_signal_check | 4 |
 | pest_pressure | 3 |
-| pesticide_risk | 2 |
-| site_readiness | 10 |
+| pesticide_risk | 3 |
+| post_harvest | 2 |
+| short_answer | 4 |
+| site_readiness | 12 |
 
 ## Answer-style checks
 
 | Check | Count |
 |---|---:|
-| Uses cautious language, such as possible concern | 40 |
-| Includes avoid / do not guidance | 38 |
-| Mentions inspection or physical inspection | 23 |
+| Uses cautious language, such as possible concern | 60 |
+| Includes avoid / do not guidance | 57 |
+| Mentions inspection or physical inspection | 32 |
 | Mentions experienced beekeeper or extension officer | 4 |
 
 ## Current read

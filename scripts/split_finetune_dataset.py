@@ -8,6 +8,10 @@ EVAL_IDS = {
     "flooding_site_001",
     "storage_filtering_001",
     "edge_signal_low_activity_001",
+    "mcq_pesticide_001",
+    "short_site_001",
+    "soil_moisture_001",
+    "extension_triage_001",
 }
 
 SYSTEM_PROMPT = (
