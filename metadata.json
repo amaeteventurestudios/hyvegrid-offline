@@ -1,7 +1,10 @@
 {
   "team_id": "hyvegrid-offline-adtc-2026",
   "domain": "agriculture",
-  "language_scope": ["en", "yo"],
+  "language_scope": [
+    "en",
+    "yo"
+  ],
   "african_alpha_claim": true,
   "budget_laptop_claim": true,
   "submitter": {
@@ -25,7 +28,7 @@
     }
   ],
   "model": {
-    "name": "Gemma-2-2B-it Q4_K_M",
+    "name": "Granite-3.3-2B-Instruct Q4_K_M",
     "runtime": "llama.cpp",
     "quantization": "Q4_K_M",
     "parameters_estimate": "2B",

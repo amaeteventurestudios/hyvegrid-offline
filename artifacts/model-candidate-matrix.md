@@ -411,6 +411,14 @@ Prompt 2 notes:
 - It missed safe distance from homes, schools, roads, paths, and livestock.
 - It missed inspection and harvest access.
 
+File size: 1.4 GB
+Peak RAM GB: 1.72
+TPS: 2.97 profiler smoke / 2.7 to 3.1 local prompt tests
+First-token latency: 18,039.5 ms
+Thermal flag?: No
+ADTC profiler passed?: Smoke passed, accuracy skipped
+Decision: Keep as profiler leader. Compare with Gemma on accuracy before lock.
+
 ### Candidate run: Phi-4-mini-instruct Q4_K_M
 
 | Item | Value |
@@ -521,6 +529,41 @@ Notes:
 - Generation speed was only 2.03 tokens/sec.
 - First-token latency was high at 16.26 seconds.
 - Do not lock Gemma until Granite is profiled for comparison.
+
+## ADTC profiler smoke test: Granite
+
+| Item | Result |
+|---|---|
+| Date tested | 2026-06-19 |
+| Profiler version | adtc-profiler 0.1.0 |
+| Mode | participant |
+| Accuracy skipped? | Yes |
+| Model path | `model.gguf` |
+| Model source | `model/granite-3.3-2b-instruct-Q4_K_M.gguf` symlinked to root `model.gguf` |
+| Model architecture | granite |
+| Claimed params | 2B |
+| Context length reported | 131072 |
+| Generation TPS | 2.97 |
+| First-token latency | 18,039.5 ms |
+| Prompt tokens | 512 |
+| Generated tokens | 128 |
+| Peak RSS | 1,723.32 MB |
+| Steady-state RSS | 1,647.27 MB |
+| Peak VMS | 70,622.48 MB |
+| CPU p99 | 91% |
+| Thermal throttled | false |
+| Accuracy | Skipped |
+| Output file | `artifacts/granite-participant-smoke.json` |
+| Decision | Faster and lighter than Gemma, but manual prompt quality was weaker. Keep as profiler leader and compare with accuracy-bearing tests before locking. |
+
+Notes:
+
+- This was measured on Amaete's iMac, not the ADTC Standard Laptop.
+- The profiler completed successfully and produced a schema-valid participant JSON.
+- Granite stayed under 1.8 GB peak RSS in this smoke run.
+- Generation speed was 2.97 tokens/sec, faster than Gemma's 2.03 tokens/sec.
+- First-token latency was high at 18.04 seconds.
+- Do not lock Granite until accuracy-bearing tests confirm it can compete with Gemma on agriculture and apiculture.
 
 ## Lock criteria
 
