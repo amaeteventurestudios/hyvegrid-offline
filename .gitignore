@@ -30,3 +30,7 @@ artifacts/*.log
 .vscode/
 .idea/
 .venv-profiler/
+
+# Local training bundles and outputs
+artifacts/step7/*.zip
+artifacts/local-training-outputs/
