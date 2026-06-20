@@ -565,6 +565,15 @@ Notes:
 - First-token latency was high at 18.04 seconds.
 - Do not lock Granite until accuracy-bearing tests confirm it can compete with Gemma on agriculture and apiculture.
 
+## Step 5 official prompt benchmark
+
+| Model | Official hive ants /5 | Official site 20 hives /5 | Total /10 | Telemetry role | Step 5 decision |
+|---|---:|---:|---:|---|---|
+| Gemma-2-2B-it Q4_K_M | 1.5 | 2.0 | 3.5 | Accuracy candidate, slower | Not strong enough to lock |
+| Granite-3.3-2B-Instruct Q4_K_M | 2.0 | 1.5 | 3.5 | Efficiency leader | Not strong enough to lock, but keep as baseline |
+
+Decision: neither base model is good enough to lock after the official-prompt accuracy smoke benchmark. Move Step 6 toward public apiculture specialization and fine-tune preparation. Granite remains the efficiency baseline because of its better profiler results.
+
 ## Lock criteria
 
 Do not lock the scoring model until all of these are true:
