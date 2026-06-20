@@ -72,7 +72,7 @@ def main():
     lines.append("")
     lines.append("Before fine-tuning, review whether the dataset needs more examples for:")
     lines.append("")
-    lines.append("- General agriculture prompts beyond bees.")
+    lines.append("- More general agriculture prompts beyond bees, if hidden agriculture accuracy remains weak.")
     lines.append("- More multiple-choice style agriculture reasoning.")
     lines.append("- More site-readiness variations.")
     lines.append("- More official-prompt variants.")
@@ -80,7 +80,7 @@ def main():
     lines.append("")
     lines.append("## Next recommendation")
     lines.append("")
-    lines.append("Do not train yet. First decide whether to expand from 40 to 60 examples or create a small first fine-tune experiment plan.")
+    lines.append("The dataset has reached the 60-example checkpoint. Next, create a small first fine-tune experiment ticket. Do not lock a tuned model unless it beats the baseline models on official prompts, eval split, safety, RAM, and throughput.")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

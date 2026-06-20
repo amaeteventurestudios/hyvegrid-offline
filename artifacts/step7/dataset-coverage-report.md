@@ -38,7 +38,7 @@ The dataset now covers hive health, site readiness, pest pressure, pesticide ris
 
 Before fine-tuning, review whether the dataset needs more examples for:
 
-- General agriculture prompts beyond bees.
+- More general agriculture prompts beyond bees, if hidden agriculture accuracy remains weak.
 - More multiple-choice style agriculture reasoning.
 - More site-readiness variations.
 - More official-prompt variants.
@@ -46,4 +46,4 @@ Before fine-tuning, review whether the dataset needs more examples for:
 
 ## Next recommendation
 
-Do not train yet. First decide whether to expand from 40 to 60 examples or create a small first fine-tune experiment plan.
+The dataset has reached the 60-example checkpoint. Next, create a small first fine-tune experiment ticket. Do not lock a tuned model unless it beats the baseline models on official prompts, eval split, safety, RAM, and throughput.
