@@ -38,10 +38,13 @@ def run_one(llama_cli, model_name, model_path, prompt_row, args):
         "--top-p", str(args.top_p),
         "--repeat-penalty", str(args.repeat_penalty),
         "--threads", str(args.threads),
+        "--no-conversation",
+        "--single-turn",
+        "--no-display-prompt",
     ]
 
     if args.no_display_prompt:
-        cmd.append("--no-display-prompt")
+        pass
 
     started = time.time()
     proc = subprocess.run(
