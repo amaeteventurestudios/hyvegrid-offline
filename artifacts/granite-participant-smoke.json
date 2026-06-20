@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "profiler_version": "adtc-profiler 0.1.0",
+  "submission": {
+    "team_id": "hyvegrid-offline-adtc-2026",
+    "domain": "agriculture",
+    "language_scope": [
+      "en",
+      "yo"
+    ],
+    "african_alpha_claim": true,
+    "budget_laptop_claim": true,
+    "submitter": {
+      "name": "Amaete Umanah",
+      "email": "REPLACE_BEFORE_FINAL_SUBMISSION",
+      "github_handle": "amaeteventurestudios"
+    },
+    "cross_disciplinary_pairing": {
+      "discipline": "apiculture field intelligence + offline small-language-model deployment",
+      "load_bearing": true,
+      "description": "HyveGrid Offline combines public apiculture field reasoning, offline GGUF inference through llama.cpp, and local beekeeping decision support for hive health, site readiness, honey quality, forage, pollination, and simple edge-style field signals."
+    },
+    "test_prompts": [
+      {
+        "prompt_id": "hive-health-advisor-001",
+        "prompt": "A beekeeper reports low hive activity, ants near the hive stand, normal smell, and partially capped brood. What should they check first, and what should they avoid doing immediately?"
+      },
+      {
+        "prompt_id": "site-readiness-advisor-001",
+        "prompt": "An extension worker wants to place 20 hives near cassava, mango, pepper, and vegetable farms with a seasonal water source nearby. What site risks and forage factors should they evaluate before placing the hives?"
+      }
+    ],
+    "model": {
+      "name": "Granite-3.3-2B-Instruct Q4_K_M",
+      "runtime": "llama.cpp",
+      "quantization": "Q4_K_M",
+      "parameters_estimate": "2B",
+      "packaging": "binary_bundle"
+    }
+  },
+  "environment": {
+    "measured_on": "participant_laptop",
+    "cpu_model": "Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz",
+    "ram_gb": 32.0,
+    "gpu": "none",
+    "os": "macOS-12.7.6-x86_64-i386-64bit"
+  },
+  "throughput": {
+    "tokens_per_second_generation": 2.97,
+    "first_token_latency_ms": 18039.5,
+    "prompt_tokens": 512,
+    "generated_tokens": 128
+  },
+  "memory": {
+    "peak_rss_mb": 1723.32,
+    "steady_state_rss_mb": 1647.27,
+    "peak_vms_mb": 70622.48
+  },
+  "accuracy": [],
+  "cpu_thermal": {
+    "cpu_percent_p99": 91.0,
+    "core_temp_c_peak": null,
+    "throttled": false
+  },
+  "reproducibility": {
+    "git_commit_sha": "eae38e0927c9",
+    "docker_image_digest": "unknown",
+    "random_seed": 42
+  },
+  "model_info": {
+    "params_count": null,
+    "context_length": 131072,
+    "architecture": "granite",
+    "claimed_params_estimate": "2B",
+    "params_match": true
+  }
+}
