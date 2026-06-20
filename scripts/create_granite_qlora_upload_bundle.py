@@ -11,6 +11,7 @@ FILES = [
     "artifacts/step7/granite-lora-notebook-plan.md",
     "artifacts/step7/tuned-model-import-export-checklist.md",
     "artifacts/step7/dataset-coverage-report.md",
+    "artifacts/step7/granite-qlora-colab-runbook.md",
 ]
 
 OUT = Path("artifacts/step7/granite-qlora-upload-bundle.zip")
