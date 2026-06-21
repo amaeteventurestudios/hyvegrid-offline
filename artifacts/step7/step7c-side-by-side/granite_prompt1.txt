@@ -1,0 +1,6 @@
+# Granite 3.3 2B Q4_K_M - Prompt 1
+
+Prompt:
+Answer directly and concisely. A beekeeper reports low hive activity, ants near the hive stand, normal smell, and partially capped brood. What should they check first, and what should they avoid doing immediately?
+
+Output:

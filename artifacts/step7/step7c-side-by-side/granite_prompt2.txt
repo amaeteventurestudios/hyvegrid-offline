@@ -1,0 +1,6 @@
+# Granite 3.3 2B Q4_K_M - Prompt 2
+
+Prompt:
+Answer directly and concisely. An extension worker wants to place 20 hives near cassava, mango, pepper, and vegetable farms with a seasonal water source nearby. What site risks and forage factors should they evaluate before placing the hives?
+
+Output:
