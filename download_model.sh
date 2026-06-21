@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-mkdir -p model
-
-MODEL_PATH="model/hyvegrid-offline.gguf"
+MODEL_PATH="model.gguf"
 MODEL_URL="https://huggingface.co/ibm-granite/granite-3.3-2b-instruct-GGUF/resolve/main/granite-3.3-2b-instruct-Q4_K_M.gguf"
 MODEL_SHA256="ac71e9e32c0bea919b409c5918f69ca74339854b0319c5065e4e9fb6d95c4852"
 
