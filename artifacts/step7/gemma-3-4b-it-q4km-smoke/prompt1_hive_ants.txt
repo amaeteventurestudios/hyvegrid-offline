@@ -1,0 +1,69 @@
+# Gemma 3 4B IT Q4_K_M Smoke Test - Prompt 1
+
+Tool: llama-completion
+
+Prompt:
+A beekeeper reports low hive activity, ants near the hive stand, normal smell, and partially capped brood. What should they check first, and what should they avoid doing immediately?
+
+Output:
+0.00.016.292 I llama_completion: llama backend init
+0.00.016.302 I llama_completion: load the model and apply lora adapter, if any
+0.00.016.310 I common_init_result: fitting params to device memory ...
+0.00.016.310 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.439.644 I common_params_fit_impl: projected to use 3626 MiB of host memory vs. 32768 MiB of total host memory
+0.00.761.790 W load: control-looking token:    212 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.00.816.745 W llama_context: n_ctx_seq (2048) < n_ctx_train (131072) -- the full capacity of the model will not be utilized
+0.00.912.251 I common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.01.739.460 I llama_completion: llama threadpool init, n_threads = 4
+0.01.739.484 I llama_completion: chat template is available, enabling conversation mode (disable it with -no-cnv)
+0.01.739.486 W *** User-specified prompt will pre-start conversation, did you mean to set --system-prompt (-sys) instead?
+0.01.740.750 I llama_completion: chat template example:
+<start_of_turn>user
+You are a helpful assistant
+
+Hello<end_of_turn>
+<start_of_turn>model
+Hi there<end_of_turn>
+<start_of_turn>user
+How are you?<end_of_turn>
+<start_of_turn>model
+
+0.01.740.754 I 
+0.01.740.774 I system_info: n_threads = 4 (n_threads_batch = 4) / 8 | CPU : SSE3 = 1 | SSSE3 = 1 | ACCELERATE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.01.740.774 I 
+0.01.741.225 I llama_completion: interactive mode on.
+0.01.741.351 I sampler seed: 474625580
+0.01.741.360 I sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = -1
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.200
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.01.741.369 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist 
+0.01.741.371 I generate: n_ctx = 2048, n_batch = 2048, n_predict = 420, n_keep = 1
+0.01.741.371 I 
+0.01.741.371 I == Running in interactive mode. ==
+0.01.741.371 I  - Press Ctrl+C to interject at any time.
+0.01.741.371 I  - Press Return to return control to the AI.
+ - To return control without starting a new line, end your input with '/'.
+ - If you want to submit another line, end your input with '\'.
+0.01.741.372 I  - Not using system message. To change it, set a different value via -sys PROMPT
+0.01.741.372 I 
+Okay, this is a common beekeeping situation, and it’s good the beekeeper is paying attention! Here's a breakdown of what they should check first and what to avoid doing immediately, based on the reported symptoms:
+
+**What They Should Check First (Priority Order):**
+
+1. **Ant Activity & Access Points:** This is the *most* critical first step. The ants near the hive stand are a huge clue.
+   * **Detailed Observation:** Spend 15-30 minutes *carefully* observing the ants. Are they just foraging? Are they actively carrying brood or honey out? Are they entering specific holes or cracks in the hive stand?  This will give clues about *where* they're getting in.
+   * **Inspect the Base of the Hive Stand:**  This is the prime area to investigate. Look for:
+      * **Gaps & Cracks:** Ants can squeeze through incredibly small openings.
+      * **Loose Boards:**  Check for any boards that are loose or have gaps.
+      * **Debris:**  Accumulated dirt, leaves, or wood shavings can provide ant highways.
+   * **Consider Ant Species:** Different ant species have different behaviors. Some are more aggressive than others. Knowing the species can help you understand their motivation.
+
+2. **Brood Pattern & Health:** The partially capped brood is a key indicator.
+   * **Assess Brood Quality:**  Look closely at the capped brood. Is it uniform in size? Are there any signs of disease (e.g., deformed wings, unusual discoloration)?  A healthy brood pattern is solid and consistent.
+   * **Check for Empty Cells:**  Are there many empty cells that *could* be filled with brood? This suggests a potential issue with food availability or queen health.
+
+3. **Queen Health (Subtle Signs):** While not immediately obvious, low hive activity can sometimes be linked to queen issues.
+    * **Look for Queen Presence:**  Are you seeing the queen?  (
+> 

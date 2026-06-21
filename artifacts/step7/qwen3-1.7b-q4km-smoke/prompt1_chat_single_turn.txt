@@ -1,0 +1,12 @@
+# Qwen3-1.7B Q4_K_M Chat Template Test - Prompt 1
+
+Tool: llama-cli
+Mode: chat template, single turn
+Threads: 8
+Context: 1024
+Tokens: 220
+
+Prompt:
+Answer directly and concisely. Do not show reasoning. A beekeeper reports low hive activity, ants near the hive stand, normal smell, and partially capped brood. What should they check first, and what should they avoid doing immediately?
+
+Output:
