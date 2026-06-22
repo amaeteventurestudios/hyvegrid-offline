@@ -25,6 +25,9 @@ model/
 # Benchmark artifacts
 artifacts/*.json
 artifacts/*.log
+artifacts/eval/raw_outputs/
+artifacts/eval/comparison.md
+artifacts/eval/scoring_sheet.csv
 
 # Editor
 .vscode/

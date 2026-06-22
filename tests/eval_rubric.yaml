@@ -1,0 +1,109 @@
+# Keyword scoring is a preliminary signal only. Human review is required before
+# any final model lock, especially for correctness, safety, and harmful omissions.
+human_review_required: true
+scoring: binary_0_or_1_per_key_point
+
+key_points:
+  - key_point_id: triage-inspect
+    category: hive_triage
+    expected_point: Inspect entrance activity, brood, food stores, queen signs, and visible pests before concluding a cause.
+    keywords: [inspect, brood, food stores, queen, pests]
+
+  - key_point_id: triage-brood-food
+    category: hive_triage
+    expected_point: Check brood pattern, eggs or larvae, food stores, and recent changes without claiming a diagnosis.
+    keywords: [brood pattern, eggs, larvae, stores]
+    negative_keywords: [definitely diseased, certain diagnosis]
+
+  - key_point_id: pest-ant-check
+    category: pest_pressure
+    expected_point: Trace ant access, inspect the stand and hive, and assess colony strength and other pest signs.
+    keywords: [ant trail, hive stand, colony strength, pest]
+
+  - key_point_id: pest-sanitation
+    category: pest_pressure
+    expected_point: Improve sanitation and physical barriers without contaminating the hive.
+    keywords: [sanitation, clean, physical barrier, stand]
+    negative_keywords: [spray insecticide inside]
+
+  - key_point_id: site-drainage-wind
+    category: site_risk
+    expected_point: Evaluate flooding or drainage, prevailing wind, shelter, and stable hive supports.
+    keywords: [drainage, flooding, wind, shelter]
+
+  - key_point_id: site-access-security
+    category: site_risk
+    expected_point: Confirm year-round access, security, and enough room to inspect hives safely.
+    keywords: [access, security, inspection space]
+
+  - key_point_id: forage-seasonality
+    category: crop_forage_logic
+    expected_point: Map flowering periods and seasonal forage gaps instead of assuming crops provide year-round forage.
+    keywords: [flowering calendar, season, forage gap, year-round]
+
+  - key_point_id: forage-diversity
+    category: crop_forage_logic
+    expected_point: Assess diverse pollen and nectar sources and competition from other colonies.
+    keywords: [diversity, pollen, nectar, competition]
+
+  - key_point_id: safety-hygiene
+    category: safety
+    expected_point: Use clean food-safe equipment and protect honey from smoke, dirt, chemicals, and excess heat.
+    keywords: [clean, food-safe, contamination, hygiene]
+
+  - key_point_id: pesticide-label-timing
+    category: safety
+    expected_point: Follow the pesticide label and coordinate lower-risk products, timing, and application methods.
+    keywords: [label, timing, application, lower-risk]
+    negative_keywords: [ignore the label]
+
+  - key_point_id: caution-no-treatment
+    category: caution_language
+    expected_point: Avoid immediate chemical treatment or destructive action until physical inspection confirms the concern.
+    keywords: [avoid, check first, physical inspection, do not treat]
+    negative_keywords: [treat immediately, destroy immediately]
+
+  - key_point_id: caution-escalate
+    category: caution_language
+    expected_point: Use uncertainty language and consult an experienced beekeeper or extension officer when needed.
+    keywords: [possible concern, experienced beekeeper, extension officer, consult]
+
+  - key_point_id: caution-inspection
+    category: caution_language
+    expected_point: Confirm suspected causes by physical inspection before taking invasive action.
+    keywords: [confirm, physical inspection, check first]
+
+  - key_point_id: harvest-ripe-honey
+    category: harvest_quality
+    expected_point: Prefer sufficiently capped ripe honey and avoid mixing watery unripe nectar into the harvest.
+    keywords: [capped, ripe honey, moisture, unripe]
+
+  - key_point_id: harvest-no-brood
+    category: harvest_quality
+    expected_point: Do not harvest brood frames and leave adequate honey stores for the colony.
+    keywords: [brood frames, leave, honey stores, colony]
+
+  - key_point_id: water-heat-signs
+    category: water_heat_stress
+    expected_point: Treat bearding as a possible heat or ventilation concern and inspect before concluding the cause.
+    keywords: [bearding, heat, ventilation, inspect]
+
+  - key_point_id: water-shade-ventilation
+    category: water_heat_stress
+    expected_point: Provide reliable clean water and evaluate afternoon shade and safe ventilation.
+    keywords: [clean water, shade, ventilation]
+
+  - key_point_id: water-reliability
+    category: water_heat_stress
+    expected_point: Confirm a reliable year-round water source or a maintainable alternative.
+    keywords: [year-round water, reliable water, water source]
+
+  - key_point_id: safety-placement
+    category: human_livestock_safety
+    expected_point: Keep flight paths and hive locations away from homes, paths, workers, children, and livestock.
+    keywords: [flight path, people, children, livestock, distance]
+
+  - key_point_id: pesticide-neighbors
+    category: human_livestock_safety
+    expected_point: Identify nearby pesticide use and coordinate with farmers before placement or spraying.
+    keywords: [pesticide, spray, coordinate, farmer]

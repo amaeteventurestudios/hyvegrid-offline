@@ -1,0 +1,50 @@
+prompts:
+  - prompt_id: hive-triage-01
+    category: hive_health
+    text: A beekeeper reports low hive activity, ants near the hive stand, normal smell, and partially capped brood. What should they check first, and what should they avoid doing immediately?
+    expected_rubric_ids: [triage-inspect, pest-ant-check, caution-no-treatment]
+
+  - prompt_id: site-readiness-01
+    category: site_readiness
+    text: An extension worker wants to place 20 hives near cassava, mango, pepper, and vegetable farms with a seasonal water source nearby. What site risks and forage factors should they evaluate before placing the hives?
+    expected_rubric_ids: [site-drainage-wind, forage-seasonality, pesticide-neighbors, safety-placement, water-reliability]
+
+  - prompt_id: hive-health-02
+    category: hive_health
+    text: A colony has fewer foragers than last month and an uneven brood pattern, but no strong odor. Give a cautious inspection checklist and explain when expert help is appropriate.
+    expected_rubric_ids: [triage-inspect, triage-brood-food, caution-escalate]
+
+  - prompt_id: pest-pressure-02
+    category: ants_and_pests
+    text: Ant trails and small beetles are seen around a hive. What non-destructive checks and immediate management steps should the beekeeper consider?
+    expected_rubric_ids: [pest-ant-check, pest-sanitation, caution-no-treatment]
+
+  - prompt_id: heat-stress-01
+    category: heat_stress
+    text: During several very hot afternoons, bees cluster outside the entrance and water is scarce. What should be checked, and what low-risk actions may reduce heat stress?
+    expected_rubric_ids: [water-heat-signs, water-shade-ventilation, caution-inspection]
+
+  - prompt_id: harvest-quality-01
+    category: harvest_quality
+    text: A beekeeper plans to harvest frames containing capped honey, uncapped nectar, and some brood. How should they protect honey quality and colony welfare?
+    expected_rubric_ids: [harvest-ripe-honey, harvest-no-brood, safety-hygiene]
+
+  - prompt_id: forage-pollination-01
+    category: forage_and_pollination
+    text: A farming group expects one flowering crop to feed colonies year-round. What should they assess about forage diversity, flowering calendars, and pollination before adding hives?
+    expected_rubric_ids: [forage-seasonality, forage-diversity, pesticide-neighbors]
+
+  - prompt_id: site-readiness-02
+    category: site_readiness
+    text: Before moving hives to a new field edge, what checklist should be used to assess access, security, drainage, wind exposure, and nearby people or livestock?
+    expected_rubric_ids: [site-drainage-wind, site-access-security, safety-placement]
+
+  - prompt_id: pesticide-risk-01
+    category: pesticide_risk
+    text: A vegetable farmer may spray insecticide while nearby crops are flowering. What should the beekeeper and farmer confirm and coordinate to reduce risk to bees?
+    expected_rubric_ids: [pesticide-neighbors, pesticide-label-timing, caution-escalate]
+
+  - prompt_id: water-site-01
+    category: water_shade_wind_drainage
+    text: A proposed apiary has afternoon sun, strong seasonal wind, standing water after rain, and a stream that dries up. What changes or alternatives should be considered before hive placement?
+    expected_rubric_ids: [water-reliability, water-shade-ventilation, site-drainage-wind, safety-placement]

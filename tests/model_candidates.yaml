@@ -1,0 +1,24 @@
+models:
+  - model_id: granite-3.3-2b-instruct-q4-k-m
+    display_name: Granite 3.3 2B Instruct Q4_K_M
+    model_path: model/granite-3.3-2b-instruct-q4_k_m.gguf
+    chat_template_hint: native_model_metadata
+    projected_score_formula: "0.5 * answer_score + 33.5"
+    telemetry:
+      generation_tps: 10.67
+      first_token_latency_ms: 11938.55
+      peak_rss_mb: 2736.61
+      steady_rss_mb: 2627.84
+      thermal_throttled: false
+
+  - model_id: qwen2.5-1.5b-instruct-q4-k-m
+    display_name: Qwen2.5 1.5B Instruct Q4_K_M
+    model_path: model/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    chat_template_hint: native_model_metadata
+    projected_score_formula: "0.5 * answer_score + 45.2"
+    telemetry:
+      generation_tps: 16.64
+      first_token_latency_ms: 6376.77
+      peak_rss_mb: 1694.62
+      steady_rss_mb: 1605.86
+      thermal_throttled: false
