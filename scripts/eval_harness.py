@@ -225,6 +225,28 @@ def output_path(output_dir: Path, model_id: str, condition: str, prompt_id: str)
     return output_dir / "raw_outputs" / model_id / condition / f"{prompt_id}.txt"
 
 
+def run_key(model, condition, prompt):
+    return model["model_id"], condition, prompt["prompt_id"]
+
+
+def load_existing_outputs(models, prompts, conditions, output_dir):
+    outputs = {}
+    failures = {}
+    for model in models:
+        for condition in conditions:
+            for prompt in prompts:
+                key = run_key(model, condition, prompt)
+                path = output_path(output_dir, *key)
+                if not path.is_file() or path.stat().st_size == 0:
+                    continue
+                content = path.read_text(encoding="utf-8", errors="replace")
+                if content.startswith("ERROR: llama.cpp timed out"):
+                    failures[key] = content.strip()
+                else:
+                    outputs[key] = content
+    return outputs, failures
+
+
 def run_or_plan(command, destination: Path, dry_run: bool, timeout_seconds: int):
     print(f"{'PLAN' if dry_run else 'RUN '}: {shlex.join(command)}")
     if dry_run:
@@ -331,7 +353,9 @@ def markdown_table(summary, headers):
     return "\n".join(lines) + "\n"
 
 
-def write_comparison_report(path: Path, models, conditions, rows, failures):
+def write_comparison_report(
+    path: Path, models, conditions, rows, failures, missing_outputs
+):
     model_scores = score_summary(rows, ["model_id", "condition"])
     prompt_scores = score_summary(rows, ["model_id", "condition", "prompt_id"])
     category_scores = score_summary(rows, ["model_id", "condition", "category"])
@@ -357,19 +381,33 @@ def write_comparison_report(path: Path, models, conditions, rows, failures):
                 f"`{model['projected_score_formula']}`"
             )
 
+    decision_note_lines = []
     if failures:
-        decision_notes = "\n".join(
+        decision_note_lines.extend(
             f"- `{model_id}` / `{condition}` / `{prompt_id}`: {error}"
             for (model_id, condition, prompt_id), error in sorted(failures.items())
         )
-    else:
-        decision_notes = "_Pending completed model runs and reviewer notes._"
+    decision_note_lines.extend(
+        f"- Missing: `{model_id}` / `{condition}` / `{prompt_id}`"
+        for model_id, condition, prompt_id in missing_outputs
+    )
+    decision_notes = (
+        "\n".join(decision_note_lines)
+        if decision_note_lines
+        else "_No missing outputs or run failures._"
+    )
+
+    status = "PARTIAL" if missing_outputs or failures else "COMPLETE"
+    summary = (
+        f"**{status}:** {len(missing_outputs)} output(s) missing; "
+        f"{len(failures)} run failure(s) recorded."
+    )
 
     report = f"""# Granite vs Qwen Comparison
 
 ## Summary
 
-Evaluation scaffold created. Results remain pending until model runs and human review are complete.
+{summary}
 
 ## Models compared
 
@@ -407,6 +445,37 @@ Keyword matching is only a first pass. A human reviewer must score every key poi
     path.write_text(report, encoding="utf-8")
 
 
+def write_artifacts(output_dir, models, prompts, rubric_by_id, conditions, outputs, failures):
+    expected_keys = [
+        run_key(model, condition, prompt)
+        for model in models
+        for condition in conditions
+        for prompt in prompts
+    ]
+    missing_outputs = sorted(
+        key for key in expected_keys if key not in outputs and key not in failures
+    )
+    rows = build_scoring_rows(
+        models, prompts, rubric_by_id, conditions, output_dir, outputs, failures
+    )
+    write_scoring_sheet(output_dir / "scoring_sheet.csv", rows)
+    write_comparison_report(
+        output_dir / "comparison.md", models, conditions, rows, failures, missing_outputs
+    )
+    return missing_outputs
+
+
+def filter_by_ids(items, field, requested_ids, label):
+    if not requested_ids:
+        return items
+    available = {item[field] for item in items}
+    unknown = sorted(set(requested_ids) - available)
+    if unknown:
+        raise ValueError(f"Unknown {label}: {', '.join(unknown)}")
+    requested = set(requested_ids)
+    return [item for item in items if item[field] in requested]
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models-config", default="tests/model_candidates.yaml")
@@ -417,6 +486,27 @@ def parse_args():
         "--llama-cli-path", default="./llama.cpp/build/bin/llama-cli"
     )
     parser.add_argument("--condition", choices=["bare", "hyvegrid", "both"], default="both")
+    parser.add_argument(
+        "--model-id",
+        action="append",
+        help="Run only the selected model ID; may be supplied more than once.",
+    )
+    parser.add_argument(
+        "--prompt-id",
+        action="append",
+        help="Run only the selected prompt ID; may be supplied more than once.",
+    )
+    parser.add_argument(
+        "--max-runs",
+        type=int,
+        help="Run at most the first N pending combinations after filtering.",
+    )
+    parser.add_argument("--skip-existing", action="store_true")
+    parser.add_argument(
+        "--score-existing-only",
+        action="store_true",
+        help="Generate reports from existing raw outputs without running llama.cpp.",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "--timeout-seconds",
@@ -446,41 +536,85 @@ def main():
         )
         return
 
+    if args.max_runs is not None and args.max_runs < 0:
+        raise ValueError("--max-runs must be zero or greater.")
+
+    models = filter_by_ids(models, "model_id", args.model_id, "model IDs")
+    prompts = filter_by_ids(prompts, "prompt_id", args.prompt_id, "prompt IDs")
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     conditions = selected_conditions(args.condition)
     rubric_by_id = {point["key_point_id"]: point for point in rubric}
-    outputs = {}
-    failures = {}
-
-    for model in models:
-        for condition in conditions:
-            for prompt in prompts:
-                destination = output_path(
-                    output_dir, model["model_id"], condition, prompt["prompt_id"]
-                )
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                command = build_command(args.llama_cli_path, model, prompt, condition)
-                output, failure = run_or_plan(
-                    command, destination, args.dry_run, args.timeout_seconds
-                )
-                if output is not None:
-                    outputs[(model["model_id"], condition, prompt["prompt_id"])] = output
-                if failure is not None:
-                    failures[(model["model_id"], condition, prompt["prompt_id"])] = failure
-
-    rows = build_scoring_rows(
-        models, prompts, rubric_by_id, conditions, output_dir, outputs, failures
+    outputs, failures = load_existing_outputs(
+        models, prompts, conditions, output_dir
     )
-    write_scoring_sheet(output_dir / "scoring_sheet.csv", rows)
-    write_comparison_report(
-        output_dir / "comparison.md", models, conditions, rows, failures
+    runs_started = 0
+    interrupted = False
+
+    try:
+        if not args.score_existing_only:
+            for model in models:
+                for condition in conditions:
+                    for prompt in prompts:
+                        key = run_key(model, condition, prompt)
+                        destination = output_path(output_dir, *key)
+                        if args.skip_existing and (
+                            key in outputs or key in failures
+                        ):
+                            print(f"SKIP: existing non-empty output: {destination}")
+                            continue
+                        if args.max_runs is not None and runs_started >= args.max_runs:
+                            continue
+
+                        command = build_command(
+                            args.llama_cli_path, model, prompt, condition
+                        )
+                        runs_started += 1
+                        output, failure = run_or_plan(
+                            command, destination, args.dry_run, args.timeout_seconds
+                        )
+                        if output is not None:
+                            outputs[key] = output
+                            failures.pop(key, None)
+                            write_artifacts(
+                                output_dir,
+                                models,
+                                prompts,
+                                rubric_by_id,
+                                conditions,
+                                outputs,
+                                failures,
+                            )
+                        if failure is not None:
+                            failures[key] = failure
+                            outputs.pop(key, None)
+    except KeyboardInterrupt:
+        interrupted = True
+
+    missing_outputs = write_artifacts(
+        output_dir,
+        models,
+        prompts,
+        rubric_by_id,
+        conditions,
+        outputs,
+        failures,
     )
     print(f"Wrote {output_dir / 'scoring_sheet.csv'}")
     print(f"Wrote {output_dir / 'comparison.md'}")
+    print(f"Missing outputs: {len(missing_outputs)}")
     if args.dry_run:
         print("Dry run complete; llama.cpp was not executed.")
+    if args.score_existing_only:
+        print("Existing-output scoring complete; llama.cpp was not executed.")
+    if interrupted:
+        print(
+            "Run interrupted; partial reports were written. Resume with --skip-existing.",
+            file=sys.stderr,
+        )
+        return 130
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
