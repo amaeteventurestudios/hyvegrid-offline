@@ -190,6 +190,7 @@ def build_command(llama_cli: str, model, prompt, condition: str):
         str(TEMPERATURE),
         "--seed",
         str(SEED),
+        "--single-turn",
         "--no-display-prompt",
     ]
 
@@ -224,23 +225,38 @@ def output_path(output_dir: Path, model_id: str, condition: str, prompt_id: str)
     return output_dir / "raw_outputs" / model_id / condition / f"{prompt_id}.txt"
 
 
-def run_or_plan(command, destination: Path, dry_run: bool):
+def run_or_plan(command, destination: Path, dry_run: bool, timeout_seconds: int):
     print(f"{'PLAN' if dry_run else 'RUN '}: {shlex.join(command)}")
     if dry_run:
-        return None
+        return None, None
 
     destination.parent.mkdir(parents=True, exist_ok=True)
-    completed = subprocess.run(command, text=True, capture_output=True, check=False)
+    try:
+        completed = subprocess.run(
+            command,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        error = f"ERROR: llama.cpp timed out after {timeout_seconds} seconds."
+        destination.write_text(error + "\n", encoding="utf-8")
+        print(f"{error} Continuing to the next run.", file=sys.stderr)
+        return None, error
+
     destination.write_text(completed.stdout, encoding="utf-8")
     if completed.returncode != 0:
         print(completed.stderr, file=sys.stderr)
         raise RuntimeError(
             f"llama.cpp failed with exit code {completed.returncode}: {destination}"
         )
-    return completed.stdout
+    return completed.stdout, None
 
 
-def build_scoring_rows(models, prompts, rubric_by_id, conditions, output_dir, outputs):
+def build_scoring_rows(
+    models, prompts, rubric_by_id, conditions, output_dir, outputs, failures
+):
     rows = []
     for model in models:
         for condition in conditions:
@@ -251,12 +267,17 @@ def build_scoring_rows(models, prompts, rubric_by_id, conditions, output_dir, ou
                 output = outputs.get(
                     (model["model_id"], condition, prompt["prompt_id"])
                 )
+                failure = failures.get(
+                    (model["model_id"], condition, prompt["prompt_id"])
+                )
                 for key_point_id in prompt["expected_rubric_ids"]:
                     key_point = rubric_by_id[key_point_id]
                     hit, score = ("", "")
                     notes = "Manual review required before final model lock."
                     if output is not None:
                         hit, score = keyword_prescore(output, key_point)
+                    elif failure:
+                        notes = f"{failure} Manual review required."
                     else:
                         notes = "Pending model run; manual review required."
                     rows.append(
@@ -310,7 +331,7 @@ def markdown_table(summary, headers):
     return "\n".join(lines) + "\n"
 
 
-def write_comparison_report(path: Path, models, conditions, rows):
+def write_comparison_report(path: Path, models, conditions, rows, failures):
     model_scores = score_summary(rows, ["model_id", "condition"])
     prompt_scores = score_summary(rows, ["model_id", "condition", "prompt_id"])
     category_scores = score_summary(rows, ["model_id", "condition", "category"])
@@ -335,6 +356,14 @@ def write_comparison_report(path: Path, models, conditions, rows):
                 f"- {model['display_name']}: pending; formula "
                 f"`{model['projected_score_formula']}`"
             )
+
+    if failures:
+        decision_notes = "\n".join(
+            f"- `{model_id}` / `{condition}` / `{prompt_id}`: {error}"
+            for (model_id, condition, prompt_id), error in sorted(failures.items())
+        )
+    else:
+        decision_notes = "_Pending completed model runs and reviewer notes._"
 
     report = f"""# Granite vs Qwen Comparison
 
@@ -369,7 +398,7 @@ _Compare condition-level human scores after both conditions have been reviewed._
 
 ## Decision notes
 
-_Pending completed model runs and reviewer notes._
+{decision_notes}
 
 ## Manual review needed
 
@@ -389,6 +418,12 @@ def parse_args():
     )
     parser.add_argument("--condition", choices=["bare", "hyvegrid", "both"], default="both")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=180,
+        help="Maximum seconds allowed for each llama.cpp run (default: 180).",
+    )
     parser.add_argument(
         "--validate-only",
         action="store_true",
@@ -416,6 +451,7 @@ def main():
     conditions = selected_conditions(args.condition)
     rubric_by_id = {point["key_point_id"]: point for point in rubric}
     outputs = {}
+    failures = {}
 
     for model in models:
         for condition in conditions:
@@ -425,15 +461,21 @@ def main():
                 )
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 command = build_command(args.llama_cli_path, model, prompt, condition)
-                output = run_or_plan(command, destination, args.dry_run)
+                output, failure = run_or_plan(
+                    command, destination, args.dry_run, args.timeout_seconds
+                )
                 if output is not None:
                     outputs[(model["model_id"], condition, prompt["prompt_id"])] = output
+                if failure is not None:
+                    failures[(model["model_id"], condition, prompt["prompt_id"])] = failure
 
     rows = build_scoring_rows(
-        models, prompts, rubric_by_id, conditions, output_dir, outputs
+        models, prompts, rubric_by_id, conditions, output_dir, outputs, failures
     )
     write_scoring_sheet(output_dir / "scoring_sheet.csv", rows)
-    write_comparison_report(output_dir / "comparison.md", models, conditions, rows)
+    write_comparison_report(
+        output_dir / "comparison.md", models, conditions, rows, failures
+    )
     print(f"Wrote {output_dir / 'scoring_sheet.csv'}")
     print(f"Wrote {output_dir / 'comparison.md'}")
     if args.dry_run:
