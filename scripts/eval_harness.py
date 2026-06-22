@@ -233,12 +233,18 @@ def is_completed_output(path: Path):
     if not path.is_file() or path.stat().st_size == 0:
         return False
     content = path.read_text(encoding="utf-8", errors="replace")
-    return (
-        "=== COMMAND ===" in content
-        and "=== RETURN_CODE ===" in content
-        and "=== HARNESS_TIMEOUT ===" not in content
-        and "=== HARNESS_FAILURE ===" not in content
+    required_markers = (
+        "=== COMMAND ===",
+        "=== RETURN_CODE ===",
+        "=== STDOUT ===",
+        "=== STDERR ===",
     )
+    if not all(marker in content for marker in required_markers):
+        return False
+    if "=== HARNESS_TIMEOUT ===" in content or "=== HARNESS_FAILURE ===" in content:
+        return False
+    stdout, stderr = extract_captured_sections(content)
+    return bool(stdout.strip() or stderr.strip())
 
 
 def output_status(path: Path):
@@ -277,9 +283,18 @@ def format_raw_output(command, return_code, stdout, stderr, marker=None):
     return "\n".join(sections)
 
 
+def extract_captured_sections(raw_output: str):
+    _, stdout_marker, stdout = raw_output.partition("=== STDOUT ===\n")
+    if not stdout_marker:
+        return "", ""
+    stdout, stderr_marker, stderr = stdout.partition("\n=== STDERR ===\n")
+    if not stderr_marker:
+        return "", ""
+    return stdout, stderr
+
+
 def extract_scoring_text(raw_output: str):
-    stdout = raw_output.split("=== STDOUT ===\n", 1)[1]
-    stdout, stderr = stdout.split("\n=== STDERR ===\n", 1)
+    stdout, stderr = extract_captured_sections(raw_output)
     return f"{stdout}\n{stderr}".strip()
 
 
@@ -291,6 +306,10 @@ def incomplete_output_reason(path: Path):
         return "Incomplete raw output: llama.cpp timed out."
     if "=== HARNESS_FAILURE ===" in content:
         return "Incomplete raw output: llama.cpp returned a failure."
+    if all(marker in content for marker in ("=== STDOUT ===", "=== STDERR ===")):
+        stdout, stderr = extract_captured_sections(content)
+        if not stdout.strip() and not stderr.strip():
+            return "Incomplete raw output: stdout and stderr captures are empty."
     return "Incomplete raw output: required harness markers are missing."
 
 
@@ -312,7 +331,13 @@ def load_existing_outputs(models, prompts, conditions, output_dir):
     return outputs, failures
 
 
-def run_or_plan(command, destination: Path, dry_run: bool, timeout_seconds: int):
+def run_or_plan(
+    command,
+    destination: Path,
+    dry_run: bool,
+    timeout_seconds: int,
+    stream_output: bool,
+):
     print(f"{'PLAN' if dry_run else 'RUN '}: {shlex.join(command)}")
     if dry_run:
         return None, None
@@ -324,23 +349,39 @@ def run_or_plan(command, destination: Path, dry_run: bool, timeout_seconds: int)
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
             check=False,
             timeout=timeout_seconds,
         )
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as exc:
         error = f"ERROR: llama.cpp timed out after {timeout_seconds} seconds."
+        stdout = exc.stdout or ""
+        stderr = exc.stderr or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+        stderr = f"{stderr.rstrip()}\n{error}".lstrip()
         raw_output = format_raw_output(
             command,
             "timeout",
-            "",
-            error,
+            stdout,
+            stderr,
             marker="=== HARNESS_TIMEOUT ===",
         )
         atomic_write_text(destination, raw_output)
+        print(f"RETURN CODE: timeout")
+        print(f"STDOUT CHARACTERS: {len(stdout)}")
+        print(f"STDERR CHARACTERS: {len(stderr)}")
         print(f"{error} Continuing to the next run.", file=sys.stderr)
         return None, error
 
-    marker = "=== HARNESS_FAILURE ===" if completed.returncode != 0 else None
+    empty_capture = not completed.stdout.strip() and not completed.stderr.strip()
+    marker = None
+    if completed.returncode != 0:
+        marker = "=== HARNESS_FAILURE ==="
+    elif empty_capture:
+        marker = "=== HARNESS_FAILURE ===\nempty stdout/stderr capture"
     raw_output = format_raw_output(
         command,
         completed.returncode,
@@ -349,12 +390,28 @@ def run_or_plan(command, destination: Path, dry_run: bool, timeout_seconds: int)
         marker=marker,
     )
     atomic_write_text(destination, raw_output)
+    print(f"RETURN CODE: {completed.returncode}")
+    print(f"STDOUT CHARACTERS: {len(completed.stdout)}")
+    print(f"STDERR CHARACTERS: {len(completed.stderr)}")
+    if stream_output:
+        if completed.stdout:
+            print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
+        if completed.stderr:
+            print(
+                completed.stderr,
+                end="" if completed.stderr.endswith("\n") else "\n",
+                file=sys.stderr,
+            )
     if completed.returncode != 0:
         error = f"ERROR: llama.cpp exited with code {completed.returncode}."
         print(
             f"{error} Saved captured output and continuing to the next run.",
             file=sys.stderr,
         )
+        return None, error
+    if empty_capture:
+        error = "ERROR: llama.cpp returned empty stdout/stderr capture."
+        print(f"{error} Continuing to the next run.", file=sys.stderr)
         return None, error
     return extract_scoring_text(raw_output), None
 
@@ -615,6 +672,11 @@ def parse_args():
     )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
+        "--stream-output",
+        action="store_true",
+        help="Display captured llama.cpp output in the terminal after saving it.",
+    )
+    parser.add_argument(
         "--timeout-seconds",
         type=int,
         default=180,
@@ -697,7 +759,11 @@ def main():
                 job["condition"],
             )
             output, failure = run_or_plan(
-                command, destination, args.dry_run, args.timeout_seconds
+                command,
+                destination,
+                args.dry_run,
+                args.timeout_seconds,
+                args.stream_output,
             )
             if output is not None:
                 outputs[key] = output
