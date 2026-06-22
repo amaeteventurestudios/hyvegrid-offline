@@ -229,6 +229,71 @@ def run_key(model, condition, prompt):
     return model["model_id"], condition, prompt["prompt_id"]
 
 
+def is_completed_output(path: Path):
+    if not path.is_file() or path.stat().st_size == 0:
+        return False
+    content = path.read_text(encoding="utf-8", errors="replace")
+    return (
+        "=== COMMAND ===" in content
+        and "=== RETURN_CODE ===" in content
+        and "=== HARNESS_TIMEOUT ===" not in content
+        and "=== HARNESS_FAILURE ===" not in content
+    )
+
+
+def output_status(path: Path):
+    if is_completed_output(path):
+        return "complete"
+    return "incomplete" if path.exists() else "pending"
+
+
+def atomic_write_text(destination: Path, content: str):
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(destination.name + ".tmp")
+    temporary.write_text(content, encoding="utf-8")
+    temporary.replace(destination)
+
+
+def format_raw_output(command, return_code, stdout, stderr, marker=None):
+    sections = []
+    if marker:
+        sections.extend([marker, ""])
+    sections.extend(
+        [
+            "=== COMMAND ===",
+            shlex.join(command),
+            "",
+            "=== RETURN_CODE ===",
+            str(return_code),
+            "",
+            "=== STDOUT ===",
+            stdout or "",
+            "",
+            "=== STDERR ===",
+            stderr or "",
+            "",
+        ]
+    )
+    return "\n".join(sections)
+
+
+def extract_scoring_text(raw_output: str):
+    stdout = raw_output.split("=== STDOUT ===\n", 1)[1]
+    stdout, stderr = stdout.split("\n=== STDERR ===\n", 1)
+    return f"{stdout}\n{stderr}".strip()
+
+
+def incomplete_output_reason(path: Path):
+    if path.stat().st_size == 0:
+        return "Incomplete raw output: file is 0 bytes."
+    content = path.read_text(encoding="utf-8", errors="replace")
+    if "=== HARNESS_TIMEOUT ===" in content:
+        return "Incomplete raw output: llama.cpp timed out."
+    if "=== HARNESS_FAILURE ===" in content:
+        return "Incomplete raw output: llama.cpp returned a failure."
+    return "Incomplete raw output: required harness markers are missing."
+
+
 def load_existing_outputs(models, prompts, conditions, output_dir):
     outputs = {}
     failures = {}
@@ -237,13 +302,13 @@ def load_existing_outputs(models, prompts, conditions, output_dir):
             for prompt in prompts:
                 key = run_key(model, condition, prompt)
                 path = output_path(output_dir, *key)
-                if not path.is_file() or path.stat().st_size == 0:
+                if is_completed_output(path):
+                    content = path.read_text(encoding="utf-8", errors="replace")
+                    outputs[key] = extract_scoring_text(content)
+                elif not path.exists():
                     continue
-                content = path.read_text(encoding="utf-8", errors="replace")
-                if content.startswith("ERROR: llama.cpp timed out"):
-                    failures[key] = content.strip()
                 else:
-                    outputs[key] = content
+                    failures[key] = incomplete_output_reason(path)
     return outputs, failures
 
 
@@ -257,23 +322,41 @@ def run_or_plan(command, destination: Path, dry_run: bool, timeout_seconds: int)
         completed = subprocess.run(
             command,
             text=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             check=False,
             timeout=timeout_seconds,
         )
     except subprocess.TimeoutExpired:
         error = f"ERROR: llama.cpp timed out after {timeout_seconds} seconds."
-        destination.write_text(error + "\n", encoding="utf-8")
+        raw_output = format_raw_output(
+            command,
+            "timeout",
+            "",
+            error,
+            marker="=== HARNESS_TIMEOUT ===",
+        )
+        atomic_write_text(destination, raw_output)
         print(f"{error} Continuing to the next run.", file=sys.stderr)
         return None, error
 
-    destination.write_text(completed.stdout, encoding="utf-8")
+    marker = "=== HARNESS_FAILURE ===" if completed.returncode != 0 else None
+    raw_output = format_raw_output(
+        command,
+        completed.returncode,
+        completed.stdout,
+        completed.stderr,
+        marker=marker,
+    )
+    atomic_write_text(destination, raw_output)
     if completed.returncode != 0:
-        print(completed.stderr, file=sys.stderr)
-        raise RuntimeError(
-            f"llama.cpp failed with exit code {completed.returncode}: {destination}"
+        error = f"ERROR: llama.cpp exited with code {completed.returncode}."
+        print(
+            f"{error} Saved captured output and continuing to the next run.",
+            file=sys.stderr,
         )
-    return completed.stdout, None
+        return None, error
+    return extract_scoring_text(raw_output), None
 
 
 def build_scoring_rows(
@@ -384,12 +467,13 @@ def write_comparison_report(
     decision_note_lines = []
     if failures:
         decision_note_lines.extend(
-            f"- `{model_id}` / `{condition}` / `{prompt_id}`: {error}"
+            f"- Incomplete: `{model_id}` / `{condition}` / `{prompt_id}`: {error}"
             for (model_id, condition, prompt_id), error in sorted(failures.items())
         )
     decision_note_lines.extend(
         f"- Missing: `{model_id}` / `{condition}` / `{prompt_id}`"
         for model_id, condition, prompt_id in missing_outputs
+        if (model_id, condition, prompt_id) not in failures
     )
     decision_notes = (
         "\n".join(decision_note_lines)
@@ -399,8 +483,8 @@ def write_comparison_report(
 
     status = "PARTIAL" if missing_outputs or failures else "COMPLETE"
     summary = (
-        f"**{status}:** {len(missing_outputs)} output(s) missing; "
-        f"{len(failures)} run failure(s) recorded."
+        f"**{status}:** {len(missing_outputs)} output(s) missing or incomplete; "
+        f"{len(failures)} incomplete output(s) recorded."
     )
 
     report = f"""# Granite vs Qwen Comparison
@@ -453,7 +537,7 @@ def write_artifacts(output_dir, models, prompts, rubric_by_id, conditions, outpu
         for prompt in prompts
     ]
     missing_outputs = sorted(
-        key for key in expected_keys if key not in outputs and key not in failures
+        key for key in expected_keys if key not in outputs
     )
     rows = build_scoring_rows(
         models, prompts, rubric_by_id, conditions, output_dir, outputs, failures
@@ -474,6 +558,23 @@ def filter_by_ids(items, field, requested_ids, label):
         raise ValueError(f"Unknown {label}: {', '.join(unknown)}")
     requested = set(requested_ids)
     return [item for item in items if item[field] in requested]
+
+
+def build_jobs(models, prompts, conditions, output_dir):
+    return [
+        {
+            "model": model,
+            "condition": condition,
+            "prompt": prompt,
+            "key": run_key(model, condition, prompt),
+            "destination": output_path(
+                output_dir, model["model_id"], condition, prompt["prompt_id"]
+            ),
+        }
+        for model in models
+        for condition in conditions
+        for prompt in prompts
+    ]
 
 
 def parse_args():
@@ -502,6 +603,11 @@ def parse_args():
         help="Run at most the first N pending combinations after filtering.",
     )
     parser.add_argument("--skip-existing", action="store_true")
+    parser.add_argument(
+        "--list-jobs",
+        action="store_true",
+        help="List filtered job paths and completion status without running inference.",
+    )
     parser.add_argument(
         "--score-existing-only",
         action="store_true",
@@ -543,52 +649,72 @@ def main():
     prompts = filter_by_ids(prompts, "prompt_id", args.prompt_id, "prompt IDs")
 
     output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     conditions = selected_conditions(args.condition)
+    jobs = build_jobs(models, prompts, conditions, output_dir)
+
+    if args.list_jobs:
+        for job in jobs:
+            print(
+                f"model_id: {job['model']['model_id']} | "
+                f"condition: {job['condition']} | "
+                f"prompt_id: {job['prompt']['prompt_id']} | "
+                f"raw_output_path: {job['destination']} | "
+                f"status: {output_status(job['destination'])}"
+            )
+        return
+
+    output_dir.mkdir(parents=True, exist_ok=True)
     rubric_by_id = {point["key_point_id"]: point for point in rubric}
     outputs, failures = load_existing_outputs(
         models, prompts, conditions, output_dir
     )
-    runs_started = 0
     interrupted = False
 
-    try:
-        if not args.score_existing_only:
-            for model in models:
-                for condition in conditions:
-                    for prompt in prompts:
-                        key = run_key(model, condition, prompt)
-                        destination = output_path(output_dir, *key)
-                        if args.skip_existing and (
-                            key in outputs or key in failures
-                        ):
-                            print(f"SKIP: existing non-empty output: {destination}")
-                            continue
-                        if args.max_runs is not None and runs_started >= args.max_runs:
-                            continue
+    selected_jobs = []
+    if not args.score_existing_only:
+        for job in jobs:
+            if args.skip_existing and is_completed_output(job["destination"]):
+                print(f"SKIP: completed output: {job['destination']}")
+                continue
+            selected_jobs.append(job)
+        if args.max_runs is not None:
+            selected_jobs = selected_jobs[: args.max_runs]
 
-                        command = build_command(
-                            args.llama_cli_path, model, prompt, condition
-                        )
-                        runs_started += 1
-                        output, failure = run_or_plan(
-                            command, destination, args.dry_run, args.timeout_seconds
-                        )
-                        if output is not None:
-                            outputs[key] = output
-                            failures.pop(key, None)
-                            write_artifacts(
-                                output_dir,
-                                models,
-                                prompts,
-                                rubric_by_id,
-                                conditions,
-                                outputs,
-                                failures,
-                            )
-                        if failure is not None:
-                            failures[key] = failure
-                            outputs.pop(key, None)
+    try:
+        for job in selected_jobs:
+            key = job["key"]
+            destination = job["destination"]
+            status = output_status(destination)
+            print(
+                f"DESTINATION: {destination} | "
+                f"exists: {'yes' if destination.exists() else 'no'} | "
+                f"status: {status}"
+            )
+            command = build_command(
+                args.llama_cli_path,
+                job["model"],
+                job["prompt"],
+                job["condition"],
+            )
+            output, failure = run_or_plan(
+                command, destination, args.dry_run, args.timeout_seconds
+            )
+            if output is not None:
+                outputs[key] = output
+                failures.pop(key, None)
+            if failure is not None:
+                failures[key] = failure
+                outputs.pop(key, None)
+            if output is not None or failure is not None:
+                write_artifacts(
+                    output_dir,
+                    models,
+                    prompts,
+                    rubric_by_id,
+                    conditions,
+                    outputs,
+                    failures,
+                )
     except KeyboardInterrupt:
         interrupted = True
 
