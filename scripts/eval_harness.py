@@ -138,8 +138,8 @@ def require_unique(items, field, label):
 def validate_inputs(models, prompts, rubric):
     if not isinstance(models, list) or not isinstance(prompts, list) or not isinstance(rubric, list):
         raise ValueError("Models, prompts, and rubric key_points must each be a list.")
-    if len(models) != 2:
-        raise ValueError("Model config must contain exactly two candidates.")
+    if len(models) < 2:
+        raise ValueError("Model config must contain at least two candidates.")
     if len(prompts) != 10:
         raise ValueError("Prompt config must contain exactly ten prompts.")
 
@@ -486,7 +486,9 @@ def score_summary(rows, grouping):
 def projected_score(model, answer_score):
     if model["model_id"] == "granite-3.3-2b-instruct-q4-k-m":
         return 0.5 * answer_score + 33.5
-    return 0.5 * answer_score + 45.2
+    if model["model_id"] == "qwen2.5-1.5b-instruct-q4-k-m":
+        return 0.5 * answer_score + 45.2
+    return None
 
 
 def markdown_table(summary, headers):
@@ -516,10 +518,16 @@ def write_comparison_report(
         if available:
             answer_score = sum(available) / len(available)
             projected = projected_score(model, answer_score)
-            projected_lines.append(
-                f"- {model['display_name']}: {projected:.2f} "
-                f"(answer score {answer_score:.1f})"
-            )
+            if projected is None:
+                projected_lines.append(
+                    f"- {model['display_name']}: pending "
+                    f"(answer score {answer_score:.1f})"
+                )
+            else:
+                projected_lines.append(
+                    f"- {model['display_name']}: {projected:.2f} "
+                    f"(answer score {answer_score:.1f})"
+                )
         else:
             projected_lines.append(
                 f"- {model['display_name']}: pending; formula "

@@ -22,3 +22,15 @@ models:
       peak_rss_mb: 1694.62
       steady_rss_mb: 1605.86
       thermal_throttled: false
+
+  - model_id: phi-4-mini-instruct-q4-k-m
+    display_name: Phi-4 Mini Instruct Q4_K_M
+    model_path: model/phi-4-mini-instruct-q4_k_m.gguf
+    chat_template_hint: native_model_metadata
+    projected_score_formula: "pending smoke-test telemetry"
+    telemetry:
+      generation_tps: null
+      first_token_latency_ms: null
+      peak_rss_mb: null
+      steady_rss_mb: null
+      thermal_throttled: null

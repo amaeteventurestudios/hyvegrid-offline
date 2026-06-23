@@ -56,6 +56,12 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 | 9 | Phi-4-mini-instruct | Phi | 3.84B | Yes | bartowski/microsoft_Phi-4-mini-instruct-GGUF:Q4_K_M | Microsoft license, verify before lock | Conditional | Q4_K_M | TBD | 2048 | TBD | 2.0 gen t/s local iMac | TBD | No | TBD | Not yet | TBD | 3.0 | 3.0 | Medium | Relevant but incomplete hive-health answer, did not beat Gemma | Relevant site-readiness answer, but missed density, spray coordination, and safety specifics | Maybe / yes | Prompt 1 covered ants, queen health, brood disease, pests, ventilation, and hive space but missed key avoid guidance. Prompt 2 covered pesticides, forage, blooming periods, water, habitat, land use, pollen/nectar quality, and pest pressure, but missed spray timing, dry-season water plan, 20-hive density, crop-specific forage limits, human/livestock safety, access, and staged placement. Slow for its size. See run log. | Do not lock. Keep as record only |
 ---
 
+## Phase 1B challenger smoke status
+
+| Candidate name | Quantization | Source repo used | Status | Reason |
+|---|---|---|---|---|
+| Phi-4-mini-instruct | Q4_K_M | `unsloth/Phi-4-mini-instruct-GGUF` | Challenger, smoke test pending | Possible accuracy challenger to Granite, but RAM and TPS must be proven on the VM |
+
 ## Fields to record
 
 | Field | Why it matters |
