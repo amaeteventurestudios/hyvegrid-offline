@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+"""Tests for the local llama.cpp runtime wrapper.
+
+Standard library only. Uses unittest.mock so the real GGUF model and llama-cli
+binary are never required.
+"""
+
+import re
+import subprocess
+import sys
+import unittest
+from pathlib import Path
+from unittest import mock
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from app import llama_runtime as rt  # noqa: E402
+
+# A regex that would match any stdlib/third-party networking import.
+NETWORK_IMPORT_RE = re.compile(
+    r"^\s*(?:import|from)\s+("
+    r"requests|urllib|http|socket|ftplib|smtplib|telnetlib|xmlrpc|"
+    r"boto|boto3|openai|anthropic|google\.generativeai|gemini|cohere|"
+    r"websocket|aiohttp|httpx"
+    r")",
+    re.MULTILINE,
+)
+
+REQUIRED_FLAGS = ["-m", "-p", "-n", "-t", "--temp", "--single-turn"]
+
+
+class BuildCommandTests(unittest.TestCase):
+    """Directly verify the constructed llama-cli argv (no subprocess needed)."""
+
+    def test_command_contains_required_flags_and_values(self):
+        cmd = rt._build_command(
+            llama_bin="/bin/llama-cli",
+            model_path="model/x.gguf",
+            prompt="hello bees",
+            max_tokens=128,
+            temperature=0.3,
+            threads=2,
+        )
+        self.assertEqual(cmd[0], "/bin/llama-cli")
+        for flag in REQUIRED_FLAGS:
+            self.assertIn(flag, cmd)
+        # Values are positioned right after their flags.
+        self.assertEqual(cmd[cmd.index("-m") + 1], "model/x.gguf")
+        self.assertEqual(cmd[cmd.index("-p") + 1], "hello bees")
+        self.assertEqual(cmd[cmd.index("-n") + 1], "128")
+        self.assertEqual(cmd[cmd.index("-t") + 1], "2")
+        self.assertEqual(cmd[cmd.index("--temp") + 1], "0.3")
+
+
+class RunLlamaPromptTests(unittest.TestCase):
+    """Mock subprocess + filesystem so no real model/binary is needed."""
+
+    def _fake_proc(self, stdout="answer", returncode=0, stderr=""):
+        return subprocess.CompletedProcess(
+            args=[], returncode=returncode, stdout=stdout, stderr=stderr
+        )
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
+    def test_builds_expected_subprocess_command(self, _isfile, run_mock):
+        run_mock.return_value = self._fake_proc(stdout="possible concern")
+        result = rt.run_llama_prompt(
+            "PROMPT",
+            model_path="model/x.gguf",
+            llama_bin="/bin/llama-cli",
+            max_tokens=64,
+            temperature=0.2,
+            threads=4,
+        )
+        run_mock.assert_called_once()
+        cmd = run_mock.call_args[0][0]
+        for flag in REQUIRED_FLAGS:
+            self.assertIn(flag, cmd)
+        self.assertEqual(cmd[cmd.index("-m") + 1], "model/x.gguf")
+        self.assertEqual(cmd[cmd.index("-p") + 1], "PROMPT")
+        self.assertEqual(cmd[cmd.index("-n") + 1], "64")
+        # Successful run: answer is the stripped stdout.
+        self.assertEqual(result["answer"], "possible concern")
+        self.assertEqual(result["returncode"], 0)
+        self.assertFalse(result["timed_out"])
+        self.assertEqual(result["model_path"], "model/x.gguf")
+        self.assertEqual(result["llama_bin"], "/bin/llama-cli")
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", return_value=False)
+    def test_missing_llama_binary_raises(self, _isfile, run_mock):
+        with self.assertRaises(RuntimeError) as ctx:
+            rt.run_llama_prompt("p", llama_bin="/nope/llama-cli")
+        self.assertIn("binary", str(ctx.exception).lower())
+        run_mock.assert_not_called()
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", side_effect=lambda p: p == "/bin/llama-cli")
+    def test_missing_model_raises(self, _isfile, run_mock):
+        with self.assertRaises(RuntimeError) as ctx:
+            rt.run_llama_prompt(
+                "p", model_path="model/missing.gguf", llama_bin="/bin/llama-cli"
+            )
+        self.assertIn("model", str(ctx.exception).lower())
+        run_mock.assert_not_called()
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
+    def test_timeout_returns_useful_info(self, _isfile, run_mock):
+        run_mock.side_effect = subprocess.TimeoutExpired(
+            cmd=[], timeout=1, output="partial", stderr=""
+        )
+        result = rt.run_llama_prompt("p", timeout_seconds=1)
+        self.assertTrue(result["timed_out"])
+        self.assertIsNone(result["returncode"])
+        self.assertEqual(result["stdout"], "partial")
+        self.assertEqual(result["answer"], "partial")
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
+    def test_nonzero_exit_returns_error_info(self, _isfile, run_mock):
+        run_mock.return_value = self._fake_proc(
+            stdout="", returncode=1, stderr="model load failed"
+        )
+        result = rt.run_llama_prompt("p")
+        self.assertEqual(result["returncode"], 1)
+        self.assertEqual(result["answer"], "")
+        self.assertIn("model load failed", result["stderr"])
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
+    def test_no_network_flags_in_command(self, _isfile, run_mock):
+        run_mock.return_value = self._fake_proc()
+        rt.run_llama_prompt("p")
+        cmd = run_mock.call_args[0][0]
+        joined = " ".join(cmd)
+        # No cloud/remote endpoints sneaking into the invocation.
+        for bad in ("http://", "https://", "amazonaws", "openai.com"):
+            self.assertNotIn(bad, joined)
+
+
+class AnswerQuestionTests(unittest.TestCase):
+    """Verify answer_question wires the prompt builder and runtime together."""
+
+    @mock.patch("app.llama_runtime.run_llama_prompt")
+    @mock.patch("app.llama_runtime.build_prompt_with_retrieval")
+    def test_calls_builder_and_runtime_and_combines(self, build_mock, run_mock):
+        build_mock.return_value = {
+            "prompt": "PROMPT",
+            "results": [{"source_file": "hive_health.md", "heading": "Key checks"}],
+            "context": "CTX",
+        }
+        run_mock.return_value = {
+            "answer": "possible concern",
+            "stdout": "possible concern",
+            "stderr": "",
+            "returncode": 0,
+            "model_path": "model/x.gguf",
+            "llama_bin": "/bin/llama-cli",
+            "timed_out": False,
+        }
+
+        out = rt.answer_question(
+            "What about the bees?",
+            model_path="model/x.gguf",
+            llama_bin="/bin/llama-cli",
+            limit=3,
+            max_context_chars=500,
+            max_tokens=64,
+        )
+
+        build_mock.assert_called_once_with("What about the bees?", limit=3, max_context_chars=500)
+        run_mock.assert_called_once_with(
+            "PROMPT", model_path="model/x.gguf", llama_bin="/bin/llama-cli", max_tokens=64
+        )
+
+        self.assertEqual(out["question"], "What about the bees?")
+        self.assertEqual(out["prompt"], "PROMPT")
+        self.assertEqual(out["context"], "CTX")
+        self.assertEqual(out["results"], build_mock.return_value["results"])
+        self.assertEqual(out["answer"], "possible concern")
+        self.assertEqual(out["runtime"], run_mock.return_value)
+
+
+class NoCloudApiTests(unittest.TestCase):
+    """Guard against introducing any cloud/network dependency."""
+
+    def test_module_source_has_no_network_imports(self):
+        source = Path(rt.__file__).read_text(encoding="utf-8")
+        match = NETWORK_IMPORT_RE.search(source)
+        self.assertIsNone(
+            match,
+            f"Found a networking import in llama_runtime.py: {match.group(0) if match else None}",
+        )
+
+    def test_defaults_are_local_paths(self):
+        self.assertTrue(rt.DEFAULT_LLAMA_BIN.startswith("/"))
+        self.assertTrue(rt.DEFAULT_MODEL_PATH.endswith(".gguf"))
+
+
+if __name__ == "__main__":
+    unittest.main()
