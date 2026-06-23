@@ -60,7 +60,7 @@ These are starting candidates only. Do not lock any candidate until current GGUF
 
 | Candidate name | Quantization | Source repo used | Status | Reason |
 |---|---|---|---|---|
-| Phi-4-mini-instruct | Q4_K_M | `unsloth/Phi-4-mini-instruct-GGUF` | Challenger, smoke test pending | Possible accuracy challenger to Granite, but RAM and TPS must be proven on the VM |
+| Phi-4-mini-instruct | Q4_K_M | `unsloth/Phi-4-mini-instruct-GGUF` | Smoke test passed, full bare evaluation pending | Possible accuracy challenger to Granite; VM smoke measured 5.77 generation t/s and approximately 3.65 GiB peak RSS |
 
 ## Fields to record
 
