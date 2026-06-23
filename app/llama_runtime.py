@@ -72,7 +72,10 @@ def run_llama_prompt(
     max_tokens: int = 384,
     temperature: float = 0.2,
     threads: int = 4,
-    timeout_seconds: int = 180,
+    # The target hardware is a low-cost 8 GB laptop where the ~6 GB Q4 Granite
+    # model pages against swap, so a single 384-token answer can exceed 3 minutes
+    # of wall time. 600 s gives headroom without being unbounded.
+    timeout_seconds: int = 600,
 ) -> dict:
     """Run a prompt through the local llama-cli and return a result dict.
 
