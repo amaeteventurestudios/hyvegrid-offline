@@ -22,6 +22,11 @@ model/
 *.sqlite
 *.sqlite3
 
+# Generated knowledge retrieval DB and SQLite sidecars (do not commit)
+data/knowledge/*.db
+data/knowledge/*.db-*
+*.db-*
+
 # Benchmark artifacts
 artifacts/*.json
 artifacts/*.log
