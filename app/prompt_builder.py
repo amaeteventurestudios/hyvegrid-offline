@@ -114,7 +114,7 @@ def build_prompt_with_retrieval(
     question: str,
     db_path: str = DEFAULT_DB_PATH,
     limit: int = 5,
-    max_context_chars: int = 3000,
+    max_context_chars: int = 1800,
 ) -> dict:
     """Build a prompt for a question, retrieving public apiculture notes first.
 

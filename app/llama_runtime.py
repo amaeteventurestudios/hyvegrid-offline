@@ -15,6 +15,7 @@ Contract:
 """
 
 import os
+import re
 import subprocess
 
 from app.prompt_builder import build_prompt_with_retrieval
@@ -30,6 +31,88 @@ def _to_text(value) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", "replace")
     return value
+
+
+# --- Output cleaning -----------------------------------------------------
+# llama-cli runs in conversation mode (the only mode this binary supports;
+# --no-conversation is rejected) so it can apply Granite's chat template. That
+# mode prints a TUI to stdout: a banner/logo, build/model lines, an
+# "available commands" help block, an echoed copy of the prompt, the answer,
+# then a timing line and "Exiting...". clean_llama_output() keeps only the
+# answer.
+
+# The timing footer that marks the end of the answer, e.g. "[ Prompt: .. t/s | Generation: .. t/s ]".
+_TIMING_LINE_RE = re.compile(
+    r"^\s*\[\s*Prompt\s*:.*?Generation\s*:.*?\]\s*$", re.IGNORECASE
+)
+# The model answer reliably begins with the first required section. The echoed
+# prompt also lists "1. Possible concern" in the format instructions, so the
+# cleaner takes the LAST match (the real answer), not the first.
+_ANSWER_START_RE = re.compile(
+    r"^\s*1[\.\)]\s*[*_`]?\s*Possible Concern\b", re.IGNORECASE
+)
+# Fallback chrome lines (banner art, build/model/modalities, command help, the
+# ">" chat marker, "Exiting..."). Block-drawing chars cover the ASCII logo.
+_CHROME_LINE_RE = re.compile(
+    r"^("
+    r"Loading model|"
+    r"\s*>|"
+    r"build\s*:|model\s*:|modalities\s*:|"
+    r"available commands:|"
+    r"\s*/(exit|regen|clear|read|glob)\b|"
+    r"Exiting\.\.\."
+    r")",
+    re.IGNORECASE,
+)
+_BLOCK_ART_RE = re.compile(r"[▄▀█]")
+
+
+def clean_llama_output(text: str) -> str:
+    """Strip llama.cpp conversation-mode chrome and the echoed prompt.
+
+    Returns only the model's answer. Removes the banner/ASCII logo, "Loading
+    model...", build/model/modalities lines, the "available commands" help, the
+    echoed prompt, the timing line, and "Exiting...". Legitimate answer content
+    such as the section headings "Check first" and "Avoid doing immediately" is
+    preserved.
+    """
+    if not text:
+        return ""
+    lines = text.splitlines()
+
+    # 1. Drop the timing footer and everything after it.
+    for i, line in enumerate(lines):
+        if _TIMING_LINE_RE.match(line):
+            lines = lines[:i]
+            break
+
+    # 2. Prefer the structured anchor: the answer starts with "1. Possible
+    #    concern". Take the LAST such line because the echoed prompt also lists
+    #    it in the format instructions.
+    start_idx = None
+    for i in range(len(lines) - 1, -1, -1):
+        if _ANSWER_START_RE.match(lines[i]):
+            start_idx = i
+            break
+
+    if start_idx is not None:
+        answer_lines = lines[start_idx:]
+    else:
+        # Fallback for answers that do not follow the format: drop recognized
+        # chrome lines (banner, command help, chat markers, Exiting) and keep
+        # the rest.
+        answer_lines = [
+            ln
+            for ln in lines
+            if not (_CHROME_LINE_RE.match(ln) or _BLOCK_ART_RE.search(ln))
+        ]
+
+    # 3. Defensively strip any leading chat marker and trim blanks.
+    cleaned = [re.sub(r"^\s*>\s?", "", ln) for ln in answer_lines]
+    answer = "\n".join(cleaned).strip()
+
+    # 4. Best-effort fallback if nothing survived.
+    return answer if answer else text.strip()
 
 
 def _build_command(
@@ -48,9 +131,10 @@ def _build_command(
       -n   number of tokens to predict
       -t   CPU threads
       --temp                sampling temperature
-      --single-turn         answer once, then exit
-      --no-display-prompt   stdout contains only the generated answer
+      --single-turn         answer once, then exit (avoids an empty-turn loop)
+      --no-display-prompt   best-effort prompt-echo suppression
       --simple-io           basic IO for clean subprocess capture
+      --no-warmup           skip the throwaway warmup pass (speed)
     """
     return [
         llama_bin,
@@ -62,6 +146,7 @@ def _build_command(
         "--single-turn",
         "--no-display-prompt",
         "--simple-io",
+        "--no-warmup",
     ]
 
 
@@ -130,14 +215,14 @@ def run_llama_prompt(
         result["timed_out"] = True
         result["stdout"] = _to_text(exc.stdout)
         result["stderr"] = _to_text(exc.stderr)
-        result["answer"] = result["stdout"].strip()
+        result["answer"] = clean_llama_output(result["stdout"])
         return result
 
     result["stdout"] = _to_text(proc.stdout)
     result["stderr"] = _to_text(proc.stderr)
     result["returncode"] = proc.returncode
     if proc.returncode == 0:
-        result["answer"] = result["stdout"].strip()
+        result["answer"] = clean_llama_output(result["stdout"])
 
     return result
 
@@ -147,8 +232,8 @@ def answer_question(
     model_path: str = DEFAULT_MODEL_PATH,
     llama_bin: str = DEFAULT_LLAMA_BIN,
     limit: int = 5,
-    max_context_chars: int = 3000,
-    max_tokens: int = 384,
+    max_context_chars: int = 1800,
+    max_tokens: int = 512,
 ) -> dict:
     """Answer a field question end-to-end, locally and offline.
 

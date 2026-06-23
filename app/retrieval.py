@@ -203,6 +203,29 @@ def _row_to_result(row) -> dict:
     }
 
 
+# Generic documentation that must not outrank field notes for normal
+# beekeeper/site questions. README is a folder overview; glossary is plain
+# definitions. Both stay indexed and are still returned for explicit
+# definition/terminology/glossary/translation questions (see _is_glossary_intent).
+GENERIC_SOURCES = frozenset({"README.md", "glossary.md"})
+
+_GLOSSARY_INTENT_TOKENS = frozenset({
+    "definition", "definitions", "define", "defined", "defines",
+    "glossary", "terminology", "meaning", "meanings",
+    "translate", "translated", "translation",
+})
+
+
+def _is_glossary_intent(query: str) -> bool:
+    """True when a question asks for definitions/terminology/glossary help.
+
+    Keeps README/glossary available for those questions while demoting them for
+    normal beekeeper field and site-readiness questions.
+    """
+    tokens = {t.lower() for t in re.findall(r"[A-Za-z0-9]+", query or "")}
+    return bool(tokens & _GLOSSARY_INTENT_TOKENS)
+
+
 def _to_fts_query(query: str) -> str:
     """Sanitize a free-text query into an FTS5 OR query.
 
@@ -217,37 +240,55 @@ def _to_fts_query(query: str) -> str:
     return " OR ".join(tokens)
 
 
-def _fts_search(con: sqlite3.Connection, query: str, limit: int):
-    """Run an FTS5 MATCH query with bm25 ranking. Returns result rows."""
+def _fts_search(con: sqlite3.Connection, query: str, limit: int, exclude=None):
+    """Run an FTS5 MATCH query with bm25 ranking. Returns result rows.
+
+    ``exclude`` is an optional iterable of source_file names to filter out, used
+    to keep generic docs (README/glossary) out of normal beekeeper retrieval.
+    """
     fts_query = _to_fts_query(query)
     if not fts_query:
         return []
     # bm25() is negative; more negative means a better match. Negate so that a
     # higher score means a better match, and order best-first.
-    sql = (
+    select = (
         "SELECT k.source_file, k.title, k.heading, k.body, "
         "-bm25(knowledge_chunks_fts) AS score "
         "FROM knowledge_chunks_fts "
         "JOIN knowledge_chunks k ON k.id = knowledge_chunks_fts.rowid "
-        "WHERE knowledge_chunks_fts MATCH ? "
-        "ORDER BY score DESC "
-        "LIMIT ?"
     )
-    cur = con.execute(sql, (fts_query, limit))
+    exclude = sorted(exclude or set())
+    if exclude:
+        placeholders = ",".join("?" for _ in exclude)
+        where = (
+            f"WHERE knowledge_chunks_fts MATCH ? "
+            f"AND k.source_file NOT IN ({placeholders}) "
+        )
+        params = (fts_query, *exclude, limit)
+    else:
+        where = "WHERE knowledge_chunks_fts MATCH ? "
+        params = (fts_query, limit)
+    sql = f"{select}{where}ORDER BY score DESC LIMIT ?"
+    cur = con.execute(sql, params)
     return cur.fetchall()
 
 
-def _like_search(con: sqlite3.Connection, query: str, limit: int):
+def _like_search(con: sqlite3.Connection, query: str, limit: int, exclude=None):
     """Fallback search using LIKE across the normal table (no FTS5)."""
     terms = [t for t in re.split(r"\s+", query.strip()) if t]
     if not terms:
         return []
-    where = " OR ".join(
-        ["body LIKE ? OR heading LIKE ? OR title LIKE ?" for _ in terms]
-    )
+    clauses = ["body LIKE ? OR heading LIKE ? OR title LIKE ?" for _ in terms]
     params = []
     for term in terms:
         params.extend([f"%{term}%", f"%{term}%", f"%{term}%"])
+    # Parenthesize the OR group so the AND NOT IN binds correctly.
+    where = "(" + " OR ".join(clauses) + ")"
+    exclude = sorted(exclude or set())
+    if exclude:
+        placeholders = ",".join("?" for _ in exclude)
+        where += f" AND source_file NOT IN ({placeholders})"
+        params.extend(exclude)
     sql = (
         "SELECT source_file, title, heading, body, 0.0 AS score "
         "FROM knowledge_chunks WHERE " + where + " LIMIT ?"
@@ -257,24 +298,38 @@ def _like_search(con: sqlite3.Connection, query: str, limit: int):
     return cur.fetchall()
 
 
-def search_knowledge(query: str, db_path: str = DEFAULT_DB_PATH, limit: int = 5):
+def search_knowledge(
+    query: str,
+    db_path: str = DEFAULT_DB_PATH,
+    limit: int = 5,
+    include_generic: bool = None,
+):
     """Search the knowledge DB and return a list of result dicts.
 
     Each dict has: source_file, title, heading, body, score. Uses FTS5 with bm25
     ranking when available, falling back clearly to a LIKE search otherwise.
+
+    By default, generic docs (README.md, glossary.md) are excluded so field notes
+    outrank them for beekeeper/site questions. They are included automatically
+    when the query looks like a definition/terminology/glossary/translation
+    request, or when include_generic=True is passed explicitly.
     """
     build_or_open_db(db_path)
+    if include_generic is None:
+        include_generic = _is_glossary_intent(query)
+    exclude = set() if include_generic else set(GENERIC_SOURCES)
+
     con = sqlite3.connect(db_path)
     try:
         has_fts = _db_has_tables(con)
         if has_fts:
             try:
-                rows = _fts_search(con, query, limit)
+                rows = _fts_search(con, query, limit, exclude)
             except sqlite3.OperationalError:
                 # FTS5 missing at query time: fall back to LIKE.
-                rows = _like_search(con, query, limit)
+                rows = _like_search(con, query, limit, exclude)
         else:
-            rows = _like_search(con, query, limit)
+            rows = _like_search(con, query, limit, exclude)
     finally:
         con.close()
     return [_row_to_result(row) for row in rows]

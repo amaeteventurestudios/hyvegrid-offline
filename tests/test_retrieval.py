@@ -133,6 +133,66 @@ class RetrievalTests(unittest.TestCase):
         scores = [r["score"] for r in results]
         self.assertEqual(scores, sorted(scores, reverse=True))
 
+    # --- Generic-source ranking (README/glossary) --------------------------
+
+    HIVE_HEALTH_PROMPT = (
+        "A beekeeper reports low hive activity, ants near the hive stand, "
+        "normal smell, and partially capped brood. What should they check "
+        "first, and what should they avoid doing immediately?"
+    )
+
+    SITE_READINESS_PROMPT = (
+        "An extension worker wants to place 20 hives near cassava, mango, "
+        "pepper, and vegetable farms with a seasonal water source nearby. "
+        "What site risks and forage factors should they evaluate before "
+        "placing the hives?"
+    )
+
+    def test_readme_not_top_for_hive_health_prompt(self):
+        results = search_knowledge(
+            self.HIVE_HEALTH_PROMPT, db_path=str(self.db_path), limit=5
+        )
+        sources = [r["source_file"] for r in results]
+        self.assertTrue(sources)
+        self.assertNotEqual(sources[0], "README.md")
+        # README excluded entirely for this field question.
+        self.assertNotIn("README.md", sources)
+        # The relevant field note ranks first.
+        self.assertEqual(sources[0], "hive_health.md")
+
+    def test_glossary_does_not_outrank_field_notes(self):
+        for query in (self.HIVE_HEALTH_PROMPT, self.SITE_READINESS_PROMPT):
+            results = search_knowledge(query, db_path=str(self.db_path), limit=5)
+            sources = [r["source_file"] for r in results]
+            self.assertNotIn("glossary.md", sources, f"glossary leaked: {query[:40]!r}")
+            self.assertNotIn("README.md", sources, f"README leaked: {query[:40]!r}")
+            self.assertTrue(
+                sources[0].endswith("_health.md")
+                or sources[0] in ("site_readiness.md", "forage_pollination.md"),
+                f"unexpected top source {sources[0]!r}",
+            )
+
+    def test_glossary_intent_returns_generic_sources(self):
+        query = (
+            "What is the definition of an apiary and the glossary term brood?"
+        )
+        results = search_knowledge(query, db_path=str(self.db_path), limit=5)
+        sources = {r["source_file"] for r in results}
+        self.assertIn("glossary.md", sources)
+
+    def test_include_generic_override(self):
+        default = search_knowledge(
+            self.HIVE_HEALTH_PROMPT, db_path=str(self.db_path), limit=10
+        )
+        self.assertNotIn("README.md", {r["source_file"] for r in default})
+        forced = search_knowledge(
+            self.HIVE_HEALTH_PROMPT,
+            db_path=str(self.db_path),
+            limit=10,
+            include_generic=True,
+        )
+        self.assertIn("README.md", {r["source_file"] for r in forced})
+
     # --- Fallback -----------------------------------------------------------
 
     def test_fts5_query_sanitizer_ors_terms(self):
@@ -147,7 +207,7 @@ class RetrievalTests(unittest.TestCase):
         # path without disturbing build_or_open_db's table detection.
         original = retrieval._fts_search
 
-        def boom(con, query, limit):
+        def boom(con, query, limit, exclude=None):
             raise sqlite3.OperationalError("simulated FTS5 query failure")
 
         retrieval._fts_search = boom

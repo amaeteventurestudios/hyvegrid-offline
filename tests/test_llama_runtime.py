@@ -184,6 +184,111 @@ class AnswerQuestionTests(unittest.TestCase):
         self.assertEqual(out["runtime"], run_mock.return_value)
 
 
+class CleanLlamaOutputTests(unittest.TestCase):
+    """Verify the output cleaner strips chrome/echo and keeps only the answer."""
+
+    # A realistic conversation-mode stdout: banner/logo, build/model lines,
+    # "available commands" help, an echoed prompt (which itself lists the format
+    # headings "1. Possible concern"), then the real answer, then the timing
+    # footer and "Exiting...".
+    CHROME_STDOUT = (
+        "\nLoading model... \n\n"
+        "▄▄ ▄▄\n██ ██\n██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄\n\n"
+        "build      : b9753-7c082bc41\n"
+        "model      : model/granite-3.3-2b-instruct-q4_k_m.gguf\n"
+        "modalities : text\n\n"
+        "available commands:\n"
+        "  /exit or Ctrl+C     stop or exit\n"
+        "  /regen              regenerate the last response\n"
+        "  /clear              clear the chat history\n"
+        "  /read <file>        add a text file\n"
+        "  /glob <pattern>     add text files using globbing pattern\n\n\n"
+        "> # System\n"
+        "You are HyveGrid Offline, an offline apiculture field assistant.\n\n"
+        "# Required answer format\n"
+        "1. Possible concern\n"
+        "2. Check first\n"
+        "3. Avoid doing immediately\n"
+        "4. Suggested next step\n"
+        "5. When to escalate\n\n"
+        "1. Possible concern: Low activity and ants may indicate a weak colony.\n"
+        "2. Check first: Confirm by physical inspection of the entrance and brood.\n"
+        "3. Avoid doing immediately: Avoid harvesting from a stressed colony.\n"
+        "4. Suggested next step: Determine if ants are scavenging or harming bees.\n"
+        "5. When to escalate: Consult an experienced beekeeper if it declines.\n"
+        "\n[ Prompt: 17.4 t/s | Generation: 2.2 t/s ]\n\n"
+        "Exiting...\n"
+    )
+
+    EXPECTED_ANSWER = (
+        "1. Possible concern: Low activity and ants may indicate a weak colony.\n"
+        "2. Check first: Confirm by physical inspection of the entrance and brood.\n"
+        "3. Avoid doing immediately: Avoid harvesting from a stressed colony.\n"
+        "4. Suggested next step: Determine if ants are scavenging or harming bees.\n"
+        "5. When to escalate: Consult an experienced beekeeper if it declines."
+    )
+
+    def test_strips_chrome_and_echo_keeps_answer(self):
+        out = rt.clean_llama_output(self.CHROME_STDOUT)
+        self.assertEqual(out, self.EXPECTED_ANSWER)
+        # Chrome is gone.
+        for bad in [
+            "Loading model",
+            "available commands",
+            "/regen",
+            "build      :",
+            "modalities :",
+            "# System",
+            "# Required answer format",
+            "[ Prompt:",
+            "Generation:",
+            "Exiting...",
+        ]:
+            self.assertNotIn(bad, out, f"chrome leaked: {bad!r}")
+        # Legitimate section headings are kept.
+        self.assertIn("Check first", out)
+        self.assertIn("Avoid doing immediately", out)
+
+    def test_picks_last_answer_start_not_echoed_format_list(self):
+        # The echoed prompt also contains "1. Possible concern" as a bare heading;
+        # the cleaner must anchor on the real answer (the LAST match), so the
+        # echoed format-only list is dropped.
+        out = rt.clean_llama_output(self.CHROME_STDOUT)
+        self.assertTrue(out.startswith("1. Possible concern: Low activity"))
+        # The bare echoed heading (followed only by a newline then "2. Check first")
+        # is NOT the start; the answer's colon content is what wins.
+        self.assertIn("Confirm by physical inspection", out)
+
+    def test_strips_timing_footer_minimal(self):
+        stdout = (
+            "> prompt echo line\n\n"
+            "1. Possible concern: something\n2. Check first: steps\n"
+            "\n[ Prompt: 1.0 t/s | Generation: 2.0 t/s ]\nExiting...\n"
+        )
+        out = rt.clean_llama_output(stdout)
+        self.assertNotIn("[ Prompt:", out)
+        self.assertNotIn("Exiting", out)
+        self.assertIn("2. Check first: steps", out)
+
+    def test_empty_and_blank(self):
+        self.assertEqual(rt.clean_llama_output(""), "")
+        self.assertEqual(rt.clean_llama_output("   \n\n  "), "")
+
+    def test_fallback_when_no_format_anchor(self):
+        # If the model did not start with "1. Possible concern", the cleaner
+        # still drops recognized chrome lines and keeps the content.
+        stdout = (
+            "Loading model...\nbuild      : x\navailable commands:\n  /exit stop\n\n"
+            "This is a free-form answer with no numbered format.\n"
+            "\n[ Prompt: 1 t/s | Generation: 2 t/s ]\nExiting...\n"
+        )
+        out = rt.clean_llama_output(stdout)
+        self.assertIn("free-form answer", out)
+        self.assertNotIn("Loading model", out)
+        self.assertNotIn("available commands", out)
+        self.assertNotIn("[ Prompt:", out)
+
+
 class NoCloudApiTests(unittest.TestCase):
     """Guard against introducing any cloud/network dependency."""
 

@@ -12,6 +12,7 @@ they check first?"
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -26,6 +27,12 @@ from app.llama_runtime import (  # noqa: E402
     answer_question,
 )
 
+# Parses the llama.cpp timing footer, e.g. "[ Prompt: 17.4 t/s | Generation: 2.2 t/s ]".
+_TIMING_RE = re.compile(
+    r"\[\s*Prompt:\s*([\d.]+)\s*t/s.*?Generation:\s*([\d.]+)\s*t/s\s*\]",
+    re.IGNORECASE,
+)
+
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
@@ -35,8 +42,13 @@ def main(argv=None) -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL_PATH, help="GGUF model path")
     parser.add_argument("--llama-bin", default=DEFAULT_LLAMA_BIN, help="llama-cli binary path")
     parser.add_argument("--limit", type=int, default=5, help="Number of notes to retrieve")
-    parser.add_argument("--max-context-chars", type=int, default=3000)
-    parser.add_argument("--max-tokens", type=int, default=384, help="Max tokens to generate")
+    parser.add_argument("--max-context-chars", type=int, default=1800)
+    parser.add_argument("--max-tokens", type=int, default=512, help="Max tokens to generate")
+    parser.add_argument(
+        "--show-stats",
+        action="store_true",
+        help="Print prompt/generation tokens-per-second (parsed from raw stdout)",
+    )
     args = parser.parse_args(argv)
 
     bundle = answer_question(
@@ -65,6 +77,11 @@ def main(argv=None) -> int:
 
     print("Answer:")
     print(bundle["answer"])
+
+    if args.show_stats:
+        match = _TIMING_RE.search(runtime.get("stdout", "") or "")
+        if match:
+            print(f"\nGeneration: {match.group(2)} t/s | Prompt eval: {match.group(1)} t/s")
     return 0
 
 
