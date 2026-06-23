@@ -4,10 +4,12 @@
 import argparse
 import ast
 import csv
+import re
 import shlex
 import subprocess
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -481,6 +483,12 @@ def score_summary(rows, grouping):
     }
 
 
+def projected_score(model, answer_score):
+    if model["model_id"] == "granite-3.3-2b-instruct-q4-k-m":
+        return 0.5 * answer_score + 33.5
+    return 0.5 * answer_score + 45.2
+
+
 def markdown_table(summary, headers):
     if not summary:
         return "_Pending model runs and human review._\n"
@@ -507,10 +515,7 @@ def write_comparison_report(
         ]
         if available:
             answer_score = sum(available) / len(available)
-            if model["model_id"] == "granite-3.3-2b-instruct-q4-k-m":
-                projected = 0.5 * answer_score + 33.5
-            else:
-                projected = 0.5 * answer_score + 45.2
+            projected = projected_score(model, answer_score)
             projected_lines.append(
                 f"- {model['display_name']}: {projected:.2f} "
                 f"(answer score {answer_score:.1f})"
@@ -584,6 +589,119 @@ _Compare condition-level human scores after both conditions have been reviewed._
 Keyword matching is only a first pass. A human reviewer must score every key point and check safety, correctness, omissions, and misleading advice before final model lock.
 """
     path.write_text(report, encoding="utf-8")
+
+
+def apply_backspaces(text: str):
+    cleaned = []
+    for character in text:
+        if character == "\b":
+            if cleaned and cleaned[-1] != "\n":
+                cleaned.pop()
+        elif character == "\r":
+            continue
+        else:
+            cleaned.append(character)
+    return "".join(cleaned)
+
+
+def clean_generated_answer(output: str, prompt_text: str):
+    cleaned = apply_backspaces(output)
+    prompt_marker = f"> {prompt_text}"
+    if prompt_marker in cleaned:
+        cleaned = cleaned.split(prompt_marker, 1)[1]
+    cleaned = re.sub(
+        r"^\s*\[\s*Prompt:.*?Generation:.*?\]\s*$",
+        "",
+        cleaned,
+        flags=re.MULTILINE,
+    )
+    cleaned = re.sub(r"^\s*Exiting\.\.\.\s*$", "", cleaned, flags=re.MULTILINE)
+    return cleaned.strip()
+
+
+def keyword_review_summary(rows):
+    scored = [row for row in rows if row["keyword_score"] != ""]
+    hits = sum(int(row["keyword_score"]) for row in scored)
+    percentage = 100 * hits / len(scored)
+    lines = [f"{hits}/{len(scored)} key points ({percentage:.1f}%)"]
+    for row in scored:
+        result = "hit" if int(row["keyword_score"]) else "miss"
+        lines.append(
+            f"- [{result}] `{row['key_point_id']}` — {row['expected_point']}"
+        )
+    return "\n".join(lines), len(scored)
+
+
+def write_human_review(path: Path, models, prompts, rows, outputs):
+    model_scores = score_summary(rows, ["model_id", "condition"])
+    scores = {
+        model["model_id"]: model_scores[(model["model_id"], "bare")]
+        for model in models
+    }
+    projected = {
+        model["model_id"]: projected_score(model, scores[model["model_id"]])
+        for model in models
+    }
+    granite_id = "granite-3.3-2b-instruct-q4-k-m"
+    qwen_id = "qwen2.5-1.5b-instruct-q4-k-m"
+    gap = projected[qwen_id] - projected[granite_id]
+    rows_by_run = defaultdict(list)
+    for row in rows:
+        rows_by_run[(row["model_id"], row["condition"], row["prompt_id"])].append(row)
+
+    sections = [
+        "# HyveGrid Offline Bare Model Human Review",
+        "",
+        f"Generated: {datetime.now().astimezone().isoformat(timespec='seconds')}",
+        "",
+        "## Model comparison summary",
+        "",
+        f"- Granite bare score: {scores[granite_id]:.1f}%",
+        f"- Qwen bare score: {scores[qwen_id]:.1f}%",
+        f"- Granite projected score: {projected[granite_id]:.2f}",
+        f"- Qwen projected score: {projected[qwen_id]:.2f}",
+        f"- Projected score gap (Qwen minus Granite): {gap:.2f}",
+        "",
+        "## Review reminder",
+        "",
+        "- Keyword scoring is only a first pass.",
+        "- The human reviewer should correct missed synonyms or false keyword hits.",
+        "- The bare condition is closest to the ADTC scored model path.",
+    ]
+
+    model_labels = ((granite_id, "Granite"), (qwen_id, "Qwen"))
+    for prompt in prompts:
+        prompt_id = prompt["prompt_id"]
+        sections.extend(
+            [
+                "",
+                f"## Prompt: {prompt_id}",
+                "",
+                "### Prompt text",
+                "",
+                prompt["text"],
+            ]
+        )
+        for model_id, label in model_labels:
+            key = (model_id, "bare", prompt_id)
+            summary, maximum = keyword_review_summary(rows_by_run[key])
+            sections.extend(
+                [
+                    "",
+                    f"### {label} raw answer",
+                    "",
+                    clean_generated_answer(outputs[key], prompt["text"]),
+                    "",
+                    f"### Keyword score summary for {label}",
+                    "",
+                    summary,
+                    "",
+                    f"**Human score for {label}:** ____ / {maximum}",
+                ]
+            )
+        sections.extend(["", "### Notes", "", "______________________________"])
+
+    atomic_write_text(path, "\n".join(sections) + "\n")
 
 
 def write_artifacts(output_dir, models, prompts, rubric_by_id, conditions, outputs, failures):
@@ -670,6 +788,11 @@ def parse_args():
         action="store_true",
         help="Generate reports from existing raw outputs without running llama.cpp.",
     )
+    parser.add_argument(
+        "--write-human-review",
+        action="store_true",
+        help="Write a complete bare-condition human-review package without inference.",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "--stream-output",
@@ -710,6 +833,13 @@ def main():
     models = filter_by_ids(models, "model_id", args.model_id, "model IDs")
     prompts = filter_by_ids(prompts, "prompt_id", args.prompt_id, "prompt IDs")
 
+    if args.write_human_review and (
+        args.condition != "bare" or args.model_id or args.prompt_id
+    ):
+        raise ValueError(
+            "--write-human-review requires --condition bare with all models and prompts."
+        )
+
     output_dir = Path(args.output_dir)
     conditions = selected_conditions(args.condition)
     jobs = build_jobs(models, prompts, conditions, output_dir)
@@ -730,6 +860,26 @@ def main():
     outputs, failures = load_existing_outputs(
         models, prompts, conditions, output_dir
     )
+    if args.write_human_review:
+        expected_keys = {
+            run_key(model, "bare", prompt)
+            for model in models
+            for prompt in prompts
+        }
+        missing_outputs = sorted(expected_keys - set(outputs))
+        if missing_outputs or failures:
+            raise ValueError(
+                "Cannot write human review: bare condition is incomplete "
+                f"({len(missing_outputs)} missing or incomplete output(s))."
+            )
+        rows = build_scoring_rows(
+            models, prompts, rubric_by_id, conditions, output_dir, outputs, failures
+        )
+        review_path = output_dir / "bare-human-review.md"
+        write_human_review(review_path, models, prompts, rows, outputs)
+        print(f"Wrote {review_path}")
+        print("Human-review export complete; llama.cpp was not executed.")
+        return
     interrupted = False
 
     selected_jobs = []
