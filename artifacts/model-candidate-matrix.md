@@ -9,6 +9,10 @@ This file exists because HyveGrid Offline has two layers:
 
 The scored model path is the priority until the model is locked.
 
+## Model lock status
+
+Granite is selected as the current accuracy-first runtime model candidate for the next build phase. This is a model-lock decision for the current build phase, subject to final ADTC profiler/submission checks. Full rationale and evidence are in `artifacts/eval/granite-model-lock-decision.md`.
+
 ---
 
 ## Decision rule
