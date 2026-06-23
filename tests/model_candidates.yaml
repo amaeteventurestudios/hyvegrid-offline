@@ -34,3 +34,15 @@ models:
       peak_rss_mb: null
       steady_rss_mb: null
       thermal_throttled: null
+
+  - model_id: nvidia-nemotron-3-nano-4b-q4-k-m
+    display_name: NVIDIA Nemotron 3 Nano 4B Q4_K_M
+    model_path: model/nvidia-nemotron-3-nano-4b-q4_k_m.gguf
+    chat_template_hint: native_model_metadata
+    projected_score_formula: "pending smoke-test telemetry"
+    telemetry:
+      generation_tps: null
+      first_token_latency_ms: null
+      peak_rss_mb: null
+      steady_rss_mb: null
+      thermal_throttled: null
