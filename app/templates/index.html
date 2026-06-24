@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}HyveGrid Offline &middot; Mission Control{% endblock %}
+{% block content %}
+<h1>HyveGrid Offline</h1>
+<p class="lede">{{ description }}</p>
+<p class="badge">ADTC 2026 public challenge edition. Runs locally at localhost. No cloud access required during judged runtime.</p>
+
+<section class="cards">
+  {% for a in advisors %}
+  <a class="card" href="/advisor/{{ a.slug }}">
+    <h2>{{ a.name }}</h2>
+    <p>{{ a.blurb }}</p>
+    <span class="tag">Planned for demo</span>
+  </a>
+  {% endfor %}
+  <a class="card card-status" href="/status">
+    <h2>Offline System Status</h2>
+    <p>Runtime, model, retrieval, compliance, and benchmark evidence.</p>
+    <span class="tag tag-live">Available now</span>
+  </a>
+</section>
+{% endblock %}

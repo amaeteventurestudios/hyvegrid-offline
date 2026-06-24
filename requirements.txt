@@ -1,0 +1,11 @@
+# Local web UI dependencies for HyveGrid Offline (ADTC 2026).
+# Local only. The web app serves localhost and does not call cloud services.
+#
+# fastapi  : local web framework for the Mission Control and Status screens
+# uvicorn  : local ASGI server (binds 127.0.0.1:8000)
+# jinja2   : HTML template rendering for the screens
+# httpx    : required by FastAPI's TestClient for the offline web tests
+fastapi>=0.100
+uvicorn>=0.20
+jinja2>=3.1
+httpx>=0.24

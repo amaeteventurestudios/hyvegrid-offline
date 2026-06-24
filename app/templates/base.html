@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}HyveGrid Offline{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="/">HyveGrid Offline</a>
+      <nav class="nav">
+        <a href="/">Mission Control</a>
+        <a href="/status">Offline System Status</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap content">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="wrap footer">
+    <p>HyveGrid Offline &middot; ADTC 2026 public challenge edition &middot; local offline build, no cloud access during judged runtime.</p>
+    <p class="muted">{{ not_diagnosis }}</p>
+  </footer>
+</body>
+</html>
