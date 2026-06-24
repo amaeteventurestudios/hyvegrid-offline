@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Hive Health Advisor &middot; HyveGrid Offline{% endblock %}
+{% block content %}
+<h1>Hive Health Advisor</h1>
+<p class="lede">{{ helper }}</p>
+<p class="badge">{{ not_diagnosis }}</p>
+
+<form class="ask-form" method="post" action="/advisor/hive-health">
+  <label for="question">Your hive-health question</label>
+  <textarea id="question" name="question" rows="4"
+    placeholder="Describe what you are seeing at the hive...">{{ submitted_question }}</textarea>
+  <button type="submit">Ask locally</button>
+</form>
+
+<details class="example">
+  <summary>Example prompt (does not run automatically)</summary>
+  <p>{{ example_prompt }}</p>
+</details>
+
+{% if validation_error %}
+<p class="validation">{{ validation_error }}</p>
+{% endif %}
+
+{% if error_message %}
+<p class="error">{{ error_message }}</p>
+{% endif %}
+
+{% if answer %}
+<section class="result">
+  <h2>Answer</h2>
+  <div class="answer">{{ answer }}</div>
+
+  {% if sources %}
+  <h2>Retrieved sources</h2>
+  <ul class="sources">
+    {% for s in sources %}
+      <li><span class="src-file">{{ s.source_file }}</span> <span class="src-sep">&middot;</span> <span class="src-head">{{ s.heading }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <p class="runtime-tag">{{ runtime_ok }}</p>
+</section>
+{% endif %}
+
+<p><a class="link" href="/">&larr; Back to Mission Control</a></p>
+{% endblock %}
