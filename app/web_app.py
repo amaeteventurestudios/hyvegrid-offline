@@ -78,7 +78,7 @@ ADVISORS = [
         "blurb": "Forage diversity, flowering gaps, pesticide coordination.",
     },
     {
-        "slug": "hive-signals",
+        "slug": "hive-signal",
         "name": "Hive Signal Check",
         "blurb": "Temperature, humidity, activity, ventilation. Signals are not diagnosis.",
     },
@@ -130,6 +130,22 @@ SITE_READINESS_EXAMPLE = (
     "and vegetable farms with a seasonal water source nearby. What site risks "
     "and forage factors should they evaluate before placing the hives?"
 )
+HARVEST_QUALITY_EXAMPLE = (
+    "A beekeeper is preparing to harvest honey after a rainy week. Some frames "
+    "are mostly capped, the smoker was used heavily, and the honey will be stored "
+    "in plastic buckets. What quality risks should they check before harvesting "
+    "and storing?"
+)
+FORAGE_POLLINATION_EXAMPLE = (
+    "A beekeeper wants to support mango, pepper, and vegetable farms, but there "
+    "may be a flowering gap after mango season and pesticide spraying nearby. "
+    "What forage and pollination factors should they evaluate?"
+)
+HIVE_SIGNAL_EXAMPLE = (
+    "A hive shows rising temperature, dropping humidity, low entrance activity, "
+    "and bees clustering outside in the afternoon. What should the beekeeper "
+    "check first, and what should they avoid doing immediately?"
+)
 
 HIVE_HEALTH = {
     "title": "Hive Health Advisor",
@@ -169,6 +185,72 @@ SITE_READINESS = {
     "error": (
         "HyveGrid could not complete this local site-readiness answer. Confirm "
         "the model is downloaded and llama.cpp is available, then try again."
+    ),
+}
+
+HARVEST_QUALITY = {
+    "title": "Harvest Quality Coach",
+    "helper": (
+        "Ask an English harvest and honey-handling question. The answer runs "
+        "locally through the Granite model and the public apiculture knowledge "
+        "base. No cloud access."
+    ),
+    "page_note": (
+        "Local and offline. HyveGrid is a field tool, not a certified food-safety "
+        "or lab test."
+    ),
+    "action": "/advisor/harvest-quality",
+    "label": "Your harvest-quality question",
+    "placeholder": "Describe the harvest, frames, and storage conditions...",
+    "example": HARVEST_QUALITY_EXAMPLE,
+    "validation": "Please enter a harvest-quality question before submitting.",
+    "error": (
+        "HyveGrid could not complete this local harvest-quality answer. Confirm "
+        "the model is downloaded and llama.cpp is available, then try again."
+    ),
+}
+
+FORAGE_POLLINATION = {
+    "title": "Forage and Pollination Guide",
+    "helper": (
+        "Ask an English forage and pollination question. The answer runs locally "
+        "through the Granite model and the public apiculture knowledge base. No "
+        "cloud access."
+    ),
+    "page_note": (
+        "Local and offline. HyveGrid is a field tool, not a certified agronomy "
+        "recommendation."
+    ),
+    "action": "/advisor/forage-pollination",
+    "label": "Your forage and pollination question",
+    "placeholder": "Describe the crops, flowering season, and pesticide context...",
+    "example": FORAGE_POLLINATION_EXAMPLE,
+    "validation": "Please enter a forage and pollination question before submitting.",
+    "error": (
+        "HyveGrid could not complete this local forage and pollination answer. "
+        "Confirm the model is downloaded and llama.cpp is available, then try again."
+    ),
+}
+
+HIVE_SIGNAL = {
+    "title": "Hive Signal Check",
+    "helper": (
+        "Ask an English hive-signal question (temperature, humidity, activity, "
+        "clustering, ventilation). The answer runs locally through the Granite "
+        "model and the public apiculture knowledge base. No cloud access."
+    ),
+    "page_note": (
+        "Local and offline. Hive signals are not a diagnosis without physical "
+        "inspection."
+    ),
+    "action": "/advisor/hive-signal",
+    "label": "Your hive-signal question",
+    "placeholder": "Describe the signals you are observing at the hive...",
+    "example": HIVE_SIGNAL_EXAMPLE,
+    "validation": "Please enter a hive-signal question before submitting.",
+    "error": (
+        "HyveGrid could not complete this local hive-signal answer. Confirm the "
+        "model is downloaded and llama.cpp is available, then try again."
     ),
 }
 
@@ -264,6 +346,48 @@ async def site_readiness_form(request: Request) -> HTMLResponse:
 async def site_readiness_submit(request: Request) -> HTMLResponse:
     """Handle a submitted site-readiness question through the offline answer path."""
     return await _submit_advisor_question(request, SITE_READINESS)
+
+
+@app.get("/advisor/harvest-quality", response_class=HTMLResponse)
+async def harvest_quality_form(request: Request) -> HTMLResponse:
+    """Render the Harvest Quality Coach form (no model load on GET)."""
+    return TEMPLATES.TemplateResponse(
+        request, "advisor_form.html", _advisor_context(HARVEST_QUALITY)
+    )
+
+
+@app.post("/advisor/harvest-quality", response_class=HTMLResponse)
+async def harvest_quality_submit(request: Request) -> HTMLResponse:
+    """Handle a submitted harvest-quality question through the offline answer path."""
+    return await _submit_advisor_question(request, HARVEST_QUALITY)
+
+
+@app.get("/advisor/forage-pollination", response_class=HTMLResponse)
+async def forage_pollination_form(request: Request) -> HTMLResponse:
+    """Render the Forage and Pollination Guide form (no model load on GET)."""
+    return TEMPLATES.TemplateResponse(
+        request, "advisor_form.html", _advisor_context(FORAGE_POLLINATION)
+    )
+
+
+@app.post("/advisor/forage-pollination", response_class=HTMLResponse)
+async def forage_pollination_submit(request: Request) -> HTMLResponse:
+    """Handle a submitted forage and pollination question through the offline path."""
+    return await _submit_advisor_question(request, FORAGE_POLLINATION)
+
+
+@app.get("/advisor/hive-signal", response_class=HTMLResponse)
+async def hive_signal_form(request: Request) -> HTMLResponse:
+    """Render the Hive Signal Check form (no model load on GET)."""
+    return TEMPLATES.TemplateResponse(
+        request, "advisor_form.html", _advisor_context(HIVE_SIGNAL)
+    )
+
+
+@app.post("/advisor/hive-signal", response_class=HTMLResponse)
+async def hive_signal_submit(request: Request) -> HTMLResponse:
+    """Handle a submitted hive-signal question through the offline answer path."""
+    return await _submit_advisor_question(request, HIVE_SIGNAL)
 
 
 @app.get("/", response_class=HTMLResponse)

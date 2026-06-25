@@ -158,17 +158,96 @@ class WebAppTests(unittest.TestCase):
         self.assertNotIn("secret internal detail boom", resp.text)
         self.assertNotIn("Traceback", resp.text)
 
-    def test_other_advisors_remain_placeholders(self):
-        # Site Readiness is now wired; the remaining advisors are still placeholders.
-        for slug, name in [
-            ("harvest-quality", "Harvest Quality Coach"),
-            ("forage-pollination", "Forage and Pollination Guide"),
-            ("hive-signals", "Hive Signal Check"),
+    def test_all_advisors_are_wired(self):
+        # All five advisors now render a real form; none remain placeholders.
+        for slug in [
+            "hive-health",
+            "site-readiness",
+            "harvest-quality",
+            "forage-pollination",
+            "hive-signal",
         ]:
             resp = self.client.get(f"/advisor/{slug}")
             self.assertEqual(resp.status_code, 200, slug)
-            self.assertIn(name, resp.text)
-            self.assertIn("not enabled in this English skeleton", resp.text, slug)
+            self.assertIn("<form", resp.text)
+            self.assertIn('name="question"', resp.text)
+
+    # --- Harvest Quality / Forage & Pollination / Hive Signal (wired) -------
+
+    HARVEST_QUESTION = (
+        "A beekeeper is preparing to harvest honey after a rainy week. Some "
+        "frames are mostly capped. What quality risks should they check?"
+    )
+    FORAGE_QUESTION = (
+        "A beekeeper wants to support mango, pepper, and vegetable farms, but "
+        "there may be a flowering gap after mango season. What factors?"
+    )
+    HIVE_SIGNAL_QUESTION = (
+        "A hive shows rising temperature, dropping humidity, low entrance "
+        "activity, and bees clustering outside. What should they check first?"
+    )
+
+    def _assert_wired_advisor(self, slug, question, source_file, marker):
+        bundle = {
+            "question": question,
+            "prompt": "PROMPT",
+            "context": "CTX",
+            "results": [
+                {"source_file": source_file, "heading": "Key checks"},
+                {"source_file": "site_readiness.md", "heading": "Check first"},
+            ],
+            "answer": f"1. Possible concern: {marker}.\n2. Check first: inspect.",
+            "runtime": {"returncode": 0, "timed_out": False, "answer": "x"},
+        }
+        # GET renders the form; no answer yet.
+        resp = self.client.get(f"/advisor/{slug}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("<form", resp.text)
+        self.assertIn('name="question"', resp.text)
+        self.assertIn("Example prompt", resp.text)
+        self.assertNotIn("Completed locally", resp.text)
+        # POST valid: calls answer_question and renders answer + sources.
+        with mock.patch("app.web_app.answer_question", return_value=bundle) as m:
+            resp = self.client.post(f"/advisor/{slug}", data={"question": question})
+        self.assertEqual(resp.status_code, 200)
+        m.assert_called_once_with(question)
+        self.assertIn(marker, resp.text)
+        self.assertIn("Completed locally", resp.text)
+        self.assertIn(source_file, resp.text)
+        # Empty input: validation, no model call.
+        with mock.patch("app.web_app.answer_question") as m:
+            resp = self.client.post(f"/advisor/{slug}", data={"question": ""})
+        self.assertEqual(resp.status_code, 200)
+        m.assert_not_called()
+        self.assertNotIn("Completed locally", resp.text)
+        # Exception: safe error, no stack trace or raw exception text.
+        with mock.patch(
+            "app.web_app.answer_question",
+            side_effect=RuntimeError("secret internal detail boom"),
+        ):
+            resp = self.client.post(f"/advisor/{slug}", data={"question": question})
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("HyveGrid could not complete this local", resp.text)
+        self.assertNotIn("secret internal detail boom", resp.text)
+        self.assertNotIn("Traceback", resp.text)
+
+    def test_harvest_quality_advisor_wired(self):
+        self._assert_wired_advisor(
+            "harvest-quality", self.HARVEST_QUESTION,
+            "harvest_quality.md", "example harvest answer",
+        )
+
+    def test_forage_pollination_advisor_wired(self):
+        self._assert_wired_advisor(
+            "forage-pollination", self.FORAGE_QUESTION,
+            "forage_pollination.md", "example forage answer",
+        )
+
+    def test_hive_signal_advisor_wired(self):
+        self._assert_wired_advisor(
+            "hive-signal", self.HIVE_SIGNAL_QUESTION,
+            "hive_signals.md", "example signal answer",
+        )
 
     # --- Site Readiness Advisor (wired to the offline answer path) ----------
 
