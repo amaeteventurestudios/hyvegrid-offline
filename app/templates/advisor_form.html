@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Hive Health Advisor &middot; HyveGrid Offline{% endblock %}
+{% block title %}{{ title }} &middot; HyveGrid Offline{% endblock %}
 {% block content %}
-<h1>Hive Health Advisor</h1>
+<h1>{{ title }}</h1>
 <p class="lede">{{ helper }}</p>
-<p class="badge">{{ not_diagnosis }}</p>
+<p class="badge">{{ page_note }}</p>
 
-<form class="ask-form" method="post" action="/advisor/hive-health">
-  <label for="question">Your hive-health question</label>
+<form class="ask-form" method="post" action="{{ action }}">
+  <label for="question">{{ label }}</label>
   <textarea id="question" name="question" rows="4"
-    placeholder="Describe what you are seeing at the hive...">{{ submitted_question }}</textarea>
+    placeholder="{{ placeholder }}">{{ submitted_question }}</textarea>
   <button type="submit">Ask locally</button>
 </form>
 

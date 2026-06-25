@@ -8,12 +8,14 @@ A minimal FastAPI app serving screens at localhost:
 - Hive Health Advisor (/advisor/hive-health): a form that runs a real local
   answer through the existing offline path (retrieval + prompt builder +
   llama.cpp + Granite).
+- Site Readiness Advisor (/advisor/site-readiness): same, for apiary siting and
+  site-readiness questions.
 
 This is an English-only UI. It serves localhost only, uses no cloud services,
 and loads no GGUF model at import time. The status values are drawn from the
-completed profiler/runtime evidence (Tasks 014-018). The Hive Health Advisor
-calls answer_question() on submit, which runs the model; no other advisor is
-wired yet.
+completed profiler/runtime evidence (Tasks 014-018). The wired advisors call
+answer_question() on submit, which runs the model; the other advisors
+(harvest-quality, forage-pollination, hive-signals) remain placeholders.
 
 Run with:
     python3 -m app.web_app
@@ -116,47 +118,88 @@ NOT_DIAGNOSIS = (
     "HyveGrid is a field triage assistant, not a certified disease diagnosis tool."
 )
 
-# Hive Health Advisor copy and messages.
+# Wired-advisor copy and messages. Each config holds the template fields the
+# shared form template and shared submit logic need.
 HIVE_HEALTH_EXAMPLE = (
     "A beekeeper reports low hive activity, ants near the hive stand, normal "
     "smell, and partially capped brood. What should they check first, and what "
     "should they avoid doing immediately?"
 )
-HIVE_HEALTH_HELPER = (
-    "Ask an English hive-health question. The answer runs locally through the "
-    "Granite model and the public apiculture knowledge base. No cloud access."
+SITE_READINESS_EXAMPLE = (
+    "An extension worker wants to place 20 hives near cassava, mango, pepper, "
+    "and vegetable farms with a seasonal water source nearby. What site risks "
+    "and forage factors should they evaluate before placing the hives?"
 )
-VALIDATION_EMPTY = "Please enter a hive-health question before submitting."
-ANSWER_ERROR = (
-    "HyveGrid could not complete this local answer. Confirm the model is "
-    "downloaded and llama.cpp is available, then try again."
-)
+
+HIVE_HEALTH = {
+    "title": "Hive Health Advisor",
+    "helper": (
+        "Ask an English hive-health question. The answer runs locally through "
+        "the Granite model and the public apiculture knowledge base. No cloud "
+        "access."
+    ),
+    "page_note": NOT_DIAGNOSIS,
+    "action": "/advisor/hive-health",
+    "label": "Your hive-health question",
+    "placeholder": "Describe what you are seeing at the hive...",
+    "example": HIVE_HEALTH_EXAMPLE,
+    "validation": "Please enter a hive-health question before submitting.",
+    "error": (
+        "HyveGrid could not complete this local answer. Confirm the model is "
+        "downloaded and llama.cpp is available, then try again."
+    ),
+}
+
+SITE_READINESS = {
+    "title": "Site Readiness Advisor",
+    "helper": (
+        "Ask an English site-readiness or apiary-siting question. The answer "
+        "runs locally through the Granite model and the public apiculture "
+        "knowledge base. No cloud access."
+    ),
+    "page_note": (
+        "Local and offline. HyveGrid is a field tool, not a certified site "
+        "approval tool."
+    ),
+    "action": "/advisor/site-readiness",
+    "label": "Your site-readiness question",
+    "placeholder": "Describe the apiary site you are evaluating...",
+    "example": SITE_READINESS_EXAMPLE,
+    "validation": "Please enter a site-readiness question before submitting.",
+    "error": (
+        "HyveGrid could not complete this local site-readiness answer. Confirm "
+        "the model is downloaded and llama.cpp is available, then try again."
+    ),
+}
+
 RUNTIME_OK = "Completed locally."
 
 
-def _hive_health_context() -> dict:
-    """Base template context for the Hive Health Advisor page."""
+def _advisor_context(advisor: dict) -> dict:
+    """Base template context for an advisor form page."""
     return {
-        "example_prompt": HIVE_HEALTH_EXAMPLE,
-        "helper": HIVE_HEALTH_HELPER,
+        "title": advisor["title"],
+        "helper": advisor["helper"],
+        "page_note": advisor["page_note"],
+        "action": advisor["action"],
+        "label": advisor["label"],
+        "placeholder": advisor["placeholder"],
+        "example_prompt": advisor["example"],
         "not_diagnosis": NOT_DIAGNOSIS,
         "submitted_question": "",
     }
 
 
-@app.get("/advisor/hive-health", response_class=HTMLResponse)
-async def hive_health_form(request: Request) -> HTMLResponse:
-    """Render the Hive Health Advisor form (no model load on GET)."""
-    return TEMPLATES.TemplateResponse(request, "hive_health.html", _hive_health_context())
+async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLResponse:
+    """Shared POST logic for advisor forms.
 
+    Parses the urlencoded form body (no python-multipart dependency), validates
+    the question, runs answer_question() off the event loop, and renders the
+    advisor page with the answer and sources or a safe error. Raw stdout, prompt
+    text, command details, and stack traces are never shown to the user.
+    """
+    ctx = _advisor_context(advisor)
 
-@app.post("/advisor/hive-health", response_class=HTMLResponse)
-async def hive_health_submit(request: Request) -> HTMLResponse:
-    """Handle a submitted hive-health question through the offline answer path."""
-    ctx = _hive_health_context()
-
-    # Parse the urlencoded form body manually so the app needs no
-    # python-multipart dependency.
     raw = await request.body()
     form = urllib.parse.parse_qs(
         raw.decode("utf-8", "replace"), keep_blank_values=True
@@ -164,8 +207,8 @@ async def hive_health_submit(request: Request) -> HTMLResponse:
     question = (form.get("question", [""])[0] or "").strip()
 
     if not question:
-        ctx["validation_error"] = VALIDATION_EMPTY
-        return TEMPLATES.TemplateResponse(request, "hive_health.html", ctx)
+        ctx["validation_error"] = advisor["validation"]
+        return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
 
     ctx["submitted_question"] = question
 
@@ -175,8 +218,8 @@ async def hive_health_submit(request: Request) -> HTMLResponse:
         bundle = await asyncio.to_thread(answer_question, question)
     except Exception:
         # Do not expose stack traces or internal details to the user.
-        ctx["error_message"] = ANSWER_ERROR
-        return TEMPLATES.TemplateResponse(request, "hive_health.html", ctx)
+        ctx["error_message"] = advisor["error"]
+        return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
 
     runtime = bundle.get("runtime") or {}
     answer = (bundle.get("answer") or "").strip()
@@ -186,13 +229,41 @@ async def hive_health_submit(request: Request) -> HTMLResponse:
         and bool(answer)
     )
     if not ok:
-        ctx["error_message"] = ANSWER_ERROR
-        return TEMPLATES.TemplateResponse(request, "hive_health.html", ctx)
+        ctx["error_message"] = advisor["error"]
+        return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
 
     ctx["answer"] = answer
     ctx["sources"] = bundle.get("results") or []
     ctx["runtime_ok"] = RUNTIME_OK
-    return TEMPLATES.TemplateResponse(request, "hive_health.html", ctx)
+    return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
+
+
+@app.get("/advisor/hive-health", response_class=HTMLResponse)
+async def hive_health_form(request: Request) -> HTMLResponse:
+    """Render the Hive Health Advisor form (no model load on GET)."""
+    return TEMPLATES.TemplateResponse(
+        request, "advisor_form.html", _advisor_context(HIVE_HEALTH)
+    )
+
+
+@app.post("/advisor/hive-health", response_class=HTMLResponse)
+async def hive_health_submit(request: Request) -> HTMLResponse:
+    """Handle a submitted hive-health question through the offline answer path."""
+    return await _submit_advisor_question(request, HIVE_HEALTH)
+
+
+@app.get("/advisor/site-readiness", response_class=HTMLResponse)
+async def site_readiness_form(request: Request) -> HTMLResponse:
+    """Render the Site Readiness Advisor form (no model load on GET)."""
+    return TEMPLATES.TemplateResponse(
+        request, "advisor_form.html", _advisor_context(SITE_READINESS)
+    )
+
+
+@app.post("/advisor/site-readiness", response_class=HTMLResponse)
+async def site_readiness_submit(request: Request) -> HTMLResponse:
+    """Handle a submitted site-readiness question through the offline answer path."""
+    return await _submit_advisor_question(request, SITE_READINESS)
 
 
 @app.get("/", response_class=HTMLResponse)

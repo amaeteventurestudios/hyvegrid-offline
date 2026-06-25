@@ -159,10 +159,96 @@ class WebAppTests(unittest.TestCase):
         self.assertNotIn("Traceback", resp.text)
 
     def test_other_advisors_remain_placeholders(self):
+        # Site Readiness is now wired; the remaining advisors are still placeholders.
+        for slug, name in [
+            ("harvest-quality", "Harvest Quality Coach"),
+            ("forage-pollination", "Forage and Pollination Guide"),
+            ("hive-signals", "Hive Signal Check"),
+        ]:
+            resp = self.client.get(f"/advisor/{slug}")
+            self.assertEqual(resp.status_code, 200, slug)
+            self.assertIn(name, resp.text)
+            self.assertIn("not enabled in this English skeleton", resp.text, slug)
+
+    # --- Site Readiness Advisor (wired to the offline answer path) ----------
+
+    SITE_QUESTION = (
+        "An extension worker wants to place 20 hives near cassava, mango, "
+        "pepper, and vegetable farms with a seasonal water source nearby. What "
+        "site risks should they evaluate before placing the hives?"
+    )
+
+    def _fake_site_bundle(self):
+        return {
+            "question": self.SITE_QUESTION,
+            "prompt": "PROMPT",
+            "context": "CTX",
+            "results": [
+                {"source_file": "site_readiness.md", "heading": "Check first"},
+                {"source_file": "forage_pollination.md", "heading": "Key checks"},
+            ],
+            "answer": (
+                "1. Possible concern: example site answer.\n"
+                "2. Check first: walk the site in wet and dry conditions."
+            ),
+            "runtime": {"returncode": 0, "timed_out": False, "answer": "x"},
+        }
+
+    def test_site_readiness_get_returns_form(self):
         resp = self.client.get("/advisor/site-readiness")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Site Readiness Advisor", resp.text)
-        self.assertIn("not enabled in this English skeleton", resp.text)
+        self.assertIn("<form", resp.text)
+        self.assertIn('name="question"', resp.text)
+        # Example prompt shown, not auto-run.
+        self.assertIn("Example prompt", resp.text)
+        self.assertIn("20 hives near cassava", resp.text)
+        # Site-specific field-tool note, not a certified approval tool.
+        self.assertIn("not a certified site approval tool", resp.text)
+        self.assertNotIn("Completed locally", resp.text)
+
+    def test_site_readiness_post_valid_calls_answer_and_displays(self):
+        with mock.patch("app.web_app.answer_question", return_value=self._fake_site_bundle()) as m:
+            resp = self.client.post(
+                "/advisor/site-readiness", data={"question": self.SITE_QUESTION}
+            )
+        self.assertEqual(resp.status_code, 200)
+        m.assert_called_once_with(self.SITE_QUESTION)
+        self.assertIn("example site answer", resp.text)
+        self.assertIn("Completed locally", resp.text)
+
+    def test_site_readiness_post_displays_sources(self):
+        with mock.patch("app.web_app.answer_question", return_value=self._fake_site_bundle()):
+            resp = self.client.post(
+                "/advisor/site-readiness", data={"question": self.SITE_QUESTION}
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("site_readiness.md", resp.text)
+        self.assertIn("Check first", resp.text)
+        self.assertIn("forage_pollination.md", resp.text)
+
+    def test_site_readiness_post_empty_shows_validation_no_call(self):
+        with mock.patch("app.web_app.answer_question") as m:
+            resp = self.client.post(
+                "/advisor/site-readiness", data={"question": ""}
+            )
+        self.assertEqual(resp.status_code, 200)
+        m.assert_not_called()
+        self.assertIn("Please enter a site-readiness question", resp.text)
+        self.assertNotIn("Completed locally", resp.text)
+
+    def test_site_readiness_post_exception_shows_safe_error(self):
+        boom = RuntimeError("secret internal detail boom")
+        with mock.patch("app.web_app.answer_question", side_effect=boom):
+            resp = self.client.post(
+                "/advisor/site-readiness", data={"question": self.SITE_QUESTION}
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(
+            "HyveGrid could not complete this local site-readiness answer", resp.text
+        )
+        self.assertNotIn("secret internal detail boom", resp.text)
+        self.assertNotIn("Traceback", resp.text)
 
 
 if __name__ == "__main__":
