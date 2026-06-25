@@ -45,6 +45,21 @@ class WebAppTests(unittest.TestCase):
         ]:
             self.assertIn(name, resp.text, f"Missing module card: {name}")
 
+    def test_mission_control_yoruba_mode_labels_and_glossary(self):
+        resp = self.client.get("/?lang=yo")
+        self.assertEqual(resp.status_code, 200)
+        for needle in [
+            "Ibi Ìṣàkóso",
+            "Olùrànlọ́wọ́ Ìlera Ilé Oyin",
+            "Ipò Ẹ̀rọ Àìsí Ayélujára",
+            "Àkójọ ọ̀rọ̀ pápá Yorùbá",
+            "Ọ̀rọ̀ ilé oyin àti agbo oyin",
+            "ilé oyin",
+            "Yoruba field labels and templates are controlled draft support",
+            "/advisor/hive-health?lang=yo",
+        ]:
+            self.assertIn(needle, resp.text)
+
     def test_status_returns_200(self):
         resp = self.client.get("/status")
         self.assertEqual(resp.status_code, 200)
@@ -66,6 +81,20 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("6.12", resp.text)  # Task 016 gen t/s
         self.assertIn("4.38", resp.text)  # Task 017 gen t/s
         self.assertIn("~2.67 GB", resp.text)
+
+    def test_status_yoruba_mode_keeps_runtime_markers(self):
+        resp = self.client.get("/status?lang=yo")
+        self.assertEqual(resp.status_code, 200)
+        for needle in [
+            "Ipò Ẹ̀rọ Àìsí Ayélujára",
+            "Ìpo àìsí ayélujára",
+            "Módẹ́lì ti wà fún lílò",
+            "Kò sí ìráyè sí cloud",
+            "llama.cpp",
+            "GGUF",
+            "SQLite FTS5",
+        ]:
+            self.assertIn(needle, resp.text)
 
     def test_advisor_placeholder_known_slug(self):
         resp = self.client.get("/advisor/hive-health")
@@ -125,6 +154,25 @@ class WebAppTests(unittest.TestCase):
         m.assert_called_once_with(self.HIVE_QUESTION)
         self.assertIn("example field answer", resp.text)
         self.assertIn("Completed locally", resp.text)
+
+    def test_hive_health_yoruba_mode_uses_controlled_template(self):
+        with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:
+            resp = self.client.post(
+                "/advisor/hive-health?lang=yo", data={"question": self.HIVE_QUESTION}
+            )
+        self.assertEqual(resp.status_code, 200)
+        m.assert_called_once_with(self.HIVE_QUESTION)
+        for needle in [
+            "Àwọn template ìtọ́nisọ́nà Yorùbá",
+            "Àkótán ohun tí a rí ní pápá",
+            "Ohun tó lè jẹ́ ìṣòro",
+            "Ṣàyẹ̀wò èyí kọ́kọ́",
+            "Má ṣe èyí lẹ́sẹ̀kẹsẹ̀",
+            "Ìdáhùn módẹ́lì ní Gẹ̀ẹ́sì",
+            "example field answer",
+            "Yoruba field labels and templates are controlled draft support",
+        ]:
+            self.assertIn(needle, resp.text)
 
     def test_hive_health_post_displays_sources(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()):

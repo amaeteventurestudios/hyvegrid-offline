@@ -1,10 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Offline System Status &middot; HyveGrid Offline{% endblock %}
+{% block title %}{{ title }} &middot; HyveGrid Offline{% endblock %}
 {% block content %}
-<h1>Offline System Status</h1>
+<h1>{{ title }}</h1>
 <p class="lede">Local runtime and submission-path evidence for the locked Granite model.</p>
+{% if is_yoruba %}
+<p class="review-note">{{ yo_review_note }}</p>
+{% endif %}
 
-<h2>System facts</h2>
+<section class="status-markers" aria-label="Status labels">
+  {% for marker in status_markers %}
+  <span>{{ marker }}</span>
+  {% endfor %}
+</section>
+
+<h2>{{ text.system_facts }}</h2>
 <table class="facts">
   <tbody>
   {% for label, value in facts %}
@@ -13,13 +22,13 @@
   </tbody>
 </table>
 
-<h2>Latest benchmark evidence</h2>
+<h2>{{ text.latest_benchmark }}</h2>
 <ul class="bench">
   {% for b in benchmarks %}
     <li><strong>{{ b.run }}:</strong> {{ b.detail }}</li>
   {% endfor %}
 </ul>
 
-<h2>Accuracy status</h2>
+<h2>{{ text.accuracy_status }}</h2>
 <p class="accuracy">{{ accuracy_status }}</p>
 {% endblock %}

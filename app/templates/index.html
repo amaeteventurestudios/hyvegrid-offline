@@ -1,22 +1,50 @@
 {% extends "base.html" %}
-{% block title %}HyveGrid Offline &middot; Mission Control{% endblock %}
+{% block title %}HyveGrid Offline &middot; {{ text.mission_control }}{% endblock %}
 {% block content %}
 <h1>HyveGrid Offline</h1>
 <p class="lede">{{ description }}</p>
 <p class="badge">ADTC 2026 public challenge edition. Runs locally at localhost. No cloud access required during judged runtime.</p>
+{% if is_yoruba %}
+<p class="review-note">{{ yo_review_note }}</p>
+{% endif %}
 
 <section class="cards">
   {% for a in advisors %}
-  <a class="card" href="/advisor/{{ a.slug }}">
+  <a class="card" href="{{ a.href }}">
     <h2>{{ a.name }}</h2>
     <p>{{ a.blurb }}</p>
-    <span class="tag">Planned for demo</span>
+    <span class="tag">{{ text.planned_for_demo }}</span>
   </a>
   {% endfor %}
-  <a class="card card-status" href="/status">
-    <h2>Offline System Status</h2>
+  <a class="card card-status" href="{{ status_card_url }}">
+    <h2>{{ status_card_title }}</h2>
     <p>Runtime, model, retrieval, compliance, and benchmark evidence.</p>
-    <span class="tag tag-live">Available now</span>
+    <span class="tag tag-live">{{ text.available_now }}</span>
   </a>
 </section>
+
+{% if is_yoruba %}
+<section class="status-markers" aria-label="Yoruba status labels">
+  {% for marker in status_markers %}
+  <span>{{ marker }}</span>
+  {% endfor %}
+</section>
+
+<section class="glossary">
+  <h2>{{ text.glossary }}</h2>
+  {% for group in glossary %}
+  <article class="glossary-group">
+    <h3>{{ group.yo_category }}</h3>
+    <dl>
+      {% for english, yoruba in group.terms %}
+      <div>
+        <dt>{{ english }}</dt>
+        <dd>{{ yoruba }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
 {% endblock %}

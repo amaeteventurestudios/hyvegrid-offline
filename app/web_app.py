@@ -1,4 +1,4 @@
-"""Local English web UI for HyveGrid Offline (ADTC 2026).
+"""Local web UI for HyveGrid Offline (ADTC 2026).
 
 A minimal FastAPI app serving screens at localhost:
 
@@ -11,11 +11,11 @@ A minimal FastAPI app serving screens at localhost:
 - Site Readiness Advisor (/advisor/site-readiness): same, for apiary siting and
   site-readiness questions.
 
-This is an English-only UI. It serves localhost only, uses no cloud services,
-and loads no GGUF model at import time. The status values are drawn from the
-completed profiler/runtime evidence (Tasks 014-018). The wired advisors call
-answer_question() on submit, which runs the model; the other advisors
-(harvest-quality, forage-pollination, hive-signals) remain placeholders.
+It serves localhost only, uses no cloud services, and loads no GGUF model at
+import time. The status values are drawn from completed profiler/runtime
+evidence. The wired advisors call answer_question() on submit, which runs the
+model. Yoruba mode uses controlled UI labels, glossary terms, and template
+headings; it does not ask Granite to freestyle Yoruba.
 
 Run with:
     python3 -m app.web_app
@@ -53,6 +53,188 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 APP_DESCRIPTION = (
     "Offline apiculture intelligence for African beekeepers and extension workers."
 )
+
+LANGUAGES = {
+    "en": {"code": "en", "name": "English", "native": "English"},
+    "yo": {"code": "yo", "name": "Yoruba", "native": "Yorùbá"},
+}
+
+YO_REVIEW_NOTE = (
+    "Yoruba field labels and templates are controlled draft support and should "
+    "be reviewed by a fluent Yoruba speaker before final submission."
+)
+
+UI_TEXT = {
+    "en": {
+        "mission_control": "Mission Control",
+        "hive_health": "Hive Health Advisor",
+        "site_readiness": "Site Readiness Advisor",
+        "harvest_quality": "Harvest Quality Coach",
+        "forage_pollination": "Forage and Pollination Guide",
+        "hive_signal": "Hive Signal Check",
+        "offline_status": "Offline System Status",
+        "ask_locally": "Ask locally",
+        "back_to_mission_control": "Back to Mission Control",
+        "example_prompt": "Example prompt",
+        "example_hint": "does not run automatically",
+        "offline_mode": "Offline mode",
+        "model_loaded": "Model loaded",
+        "local_app": "Local app",
+        "no_cloud_access": "No cloud access",
+        "public_challenge_edition": "Public challenge edition",
+        "field_guidance_only": "Field guidance only",
+        "answer": "Answer",
+        "english_answer": "English model answer",
+        "retrieved_sources": "Retrieved sources",
+        "glossary": "Yoruba field glossary",
+        "language": "Language",
+        "english": "English",
+        "yoruba": "Yoruba",
+        "available_now": "Available now",
+        "planned_for_demo": "Planned for demo",
+        "system_facts": "System facts",
+        "latest_benchmark": "Latest benchmark evidence",
+        "accuracy_status": "Accuracy status",
+    },
+    # Provisional reviewed-by-human-needed labels for Task 028.
+    "yo": {
+        "mission_control": "Ibi Ìṣàkóso",
+        "hive_health": "Olùrànlọ́wọ́ Ìlera Ilé Oyin",
+        "site_readiness": "Olùrànlọ́wọ́ Ìmúrasílẹ̀ Ibi Ilé Oyin",
+        "harvest_quality": "Olùkọ́ Didara Ikórè Oyin",
+        "forage_pollination": "Ìtọ́nisọ́nà Oúnjẹ Oyin àti Ìpolínéṣọ̀nù",
+        "hive_signal": "Àyẹ̀wò Àmì Ilé Oyin",
+        "offline_status": "Ipò Ẹ̀rọ Àìsí Ayélujára",
+        "ask_locally": "Béèrè lórí kọ̀ǹpútà yìí",
+        "back_to_mission_control": "Padà sí Ibi Ìṣàkóso",
+        "example_prompt": "Àpẹẹrẹ ìbéèrè",
+        "example_hint": "kì í ṣiṣẹ́ fúnra rẹ̀",
+        "offline_mode": "Ìpo àìsí ayélujára",
+        "model_loaded": "Módẹ́lì ti wà fún lílò",
+        "local_app": "App lórí kọ̀ǹpútà yìí",
+        "no_cloud_access": "Kò sí ìráyè sí cloud",
+        "public_challenge_edition": "Ẹ̀dà ìdíje fún gbogbo ènìyàn",
+        "field_guidance_only": "Ìtọ́nisọ́nà pápá nìkan",
+        "answer": "Ìdáhùn",
+        "english_answer": "Ìdáhùn módẹ́lì ní Gẹ̀ẹ́sì",
+        "retrieved_sources": "Àwọn orísun tí a rí",
+        "glossary": "Àkójọ ọ̀rọ̀ pápá Yorùbá",
+        "language": "Èdè",
+        "english": "Gẹ̀ẹ́sì",
+        "yoruba": "Yorùbá",
+        "available_now": "Ó wà báyìí",
+        "planned_for_demo": "A pèsè fún ìfihàn",
+        "system_facts": "Àwọn òtítọ́ nípa ẹ̀rọ",
+        "latest_benchmark": "Ẹ̀rí benchmark tuntun",
+        "accuracy_status": "Ipò ìpéye",
+    },
+}
+
+YO_CONTROLLED_HEADINGS = [
+    ("field_observation_summary", "Àkótán ohun tí a rí ní pápá"),
+    ("possible_concern", "Ohun tó lè jẹ́ ìṣòro"),
+    ("check_first", "Ṣàyẹ̀wò èyí kọ́kọ́"),
+    ("avoid_immediately", "Má ṣe èyí lẹ́sẹ̀kẹsẹ̀"),
+    ("next_safe_action", "Ìgbésẹ̀ àìléwu tó kàn"),
+    (
+        "consult",
+        "Bèrè lọ́wọ́ agbẹ oyin tó ní ìrírí tàbí òṣiṣẹ́ ìtẹ̀síwájú agbẹ",
+    ),
+    ("english_fallback", "Àkọsílẹ̀ ìpadà sí Gẹ̀ẹ́sì"),
+]
+
+YO_CONTROLLED_GUIDANCE = {
+    "field_observation_summary": (
+        "Lo àwọn ohun tí agbẹ oyin kọ sínú fọ́ọ̀mù gẹ́gẹ́ bí àkótán pápá."
+    ),
+    "possible_concern": (
+        "Wo èyí gẹ́gẹ́ bí ohun tó lè jẹ́ ìṣòro, kì í ṣe ìdánimọ̀ àrùn tó dájú."
+    ),
+    "check_first": (
+        "Ṣàyẹ̀wò ilé oyin, oyin, omi, afẹ́fẹ́, oúnjẹ, àti àyíká pẹ̀lú ojú àti ọwọ́."
+    ),
+    "avoid_immediately": (
+        "Má ṣe ìtọ́jú tó lágbára tàbí ìyípadà ńlá lẹ́sẹ̀kẹsẹ̀ láì jẹ́rìí sí i."
+    ),
+    "next_safe_action": (
+        "Jẹ́rìí sí i pẹ̀lú àyẹ̀wò ojú àti ọwọ́, kí o sì kọ ohun tí o rí sílẹ̀."
+    ),
+    "consult": (
+        "Bèrè lọ́wọ́ agbẹ oyin tó ní ìrírí tàbí òṣiṣẹ́ ìtẹ̀síwájú agbẹ tí ọ̀rọ̀ bá "
+        "le, bá burú, tàbí kò ye ọ."
+    ),
+    "english_fallback": (
+        "Ìdáhùn kikún ti módẹ́lì wà ní Gẹ̀ẹ́sì ní isalẹ. Àwọn gbolohun Yorùbá "
+        "wọ̀nyí jẹ́ template tó ní ààbò, kì í ṣe ìtumọ̀ aládàáṣiṣẹ́."
+    ),
+}
+
+YO_GLOSSARY = [
+    {
+        "category": "Hive and colony terms",
+        "yo_category": "Ọ̀rọ̀ ilé oyin àti agbo oyin",
+        "terms": [
+            ("hive", "ilé oyin"),
+            ("colony", "agbo oyin"),
+            ("brood", "ọmọ oyin"),
+            ("queen", "ayaba oyin"),
+            ("entrance", "ẹnu-ọ̀nà ilé oyin"),
+        ],
+    },
+    {
+        "category": "Pest and disease pressure terms",
+        "yo_category": "Ọ̀rọ̀ kokoro àti ìfihàn àìlera",
+        "terms": [
+            ("ants", "kokoro èèrà"),
+            ("wax moth", "kokoro wax moth"),
+            ("weak colony", "agbo oyin aláìlera"),
+            ("abnormal smell", "òórùn tí kò bójú mu"),
+        ],
+    },
+    {
+        "category": "Site and forage terms",
+        "yo_category": "Ọ̀rọ̀ ibi, ewéko, àti oúnjẹ oyin",
+        "terms": [
+            ("shade", "òjìji"),
+            ("water source", "orisun omi"),
+            ("pesticide", "oògùn kokoro"),
+            ("flowering crops", "irúgbìn tó ń yọ òdòdó"),
+        ],
+    },
+    {
+        "category": "Harvest and honey quality terms",
+        "yo_category": "Ọ̀rọ̀ ikórè àti didara oyin",
+        "terms": [
+            ("capped frame", "fireemu tí oyin ti bo"),
+            ("moisture", "ọrinrin"),
+            ("smoke contamination", "ìdọ̀tí ẹfin"),
+            ("food-grade container", "àpò ìpamọ́ tó yẹ fún oúnjẹ"),
+        ],
+    },
+    {
+        "category": "Signal/status terms",
+        "yo_category": "Ọ̀rọ̀ àmì àti ipò",
+        "terms": [
+            ("temperature", "ìwọ̀n ooru"),
+            ("humidity", "ọrinrin afẹ́fẹ́"),
+            ("entrance activity", "ìrìn-àjò ní ẹnu-ọ̀nà"),
+            ("ventilation", "ìfẹ́fẹ́ wọlé-jáde"),
+        ],
+    },
+    {
+        "category": "Safety and caution terms",
+        "yo_category": "Ọ̀rọ̀ ààbò àti ìkìlọ̀",
+        "terms": [
+            ("possible concern", "ohun tó lè jẹ́ ìṣòro"),
+            ("check first", "ṣàyẹ̀wò èyí kọ́kọ́"),
+            ("avoid immediately", "má ṣe èyí lẹ́sẹ̀kẹsẹ̀"),
+            (
+                "confirm by physical inspection",
+                "jẹ́rìí sí i pẹ̀lú àyẹ̀wò ojú àti ọwọ́",
+            ),
+        ],
+    },
+]
 
 # Advisor modules are shown as navigation cards. They are planned for a later
 # demo phase and are not enabled in this English skeleton beyond a placeholder.
@@ -148,6 +330,7 @@ HIVE_SIGNAL_EXAMPLE = (
 )
 
 HIVE_HEALTH = {
+    "slug": "hive-health",
     "title": "Hive Health Advisor",
     "helper": (
         "Ask an English hive-health question. The answer runs locally through "
@@ -167,6 +350,7 @@ HIVE_HEALTH = {
 }
 
 SITE_READINESS = {
+    "slug": "site-readiness",
     "title": "Site Readiness Advisor",
     "helper": (
         "Ask an English site-readiness or apiary-siting question. The answer "
@@ -189,6 +373,7 @@ SITE_READINESS = {
 }
 
 HARVEST_QUALITY = {
+    "slug": "harvest-quality",
     "title": "Harvest Quality Coach",
     "helper": (
         "Ask an English harvest and honey-handling question. The answer runs "
@@ -211,6 +396,7 @@ HARVEST_QUALITY = {
 }
 
 FORAGE_POLLINATION = {
+    "slug": "forage-pollination",
     "title": "Forage and Pollination Guide",
     "helper": (
         "Ask an English forage and pollination question. The answer runs locally "
@@ -233,6 +419,7 @@ FORAGE_POLLINATION = {
 }
 
 HIVE_SIGNAL = {
+    "slug": "hive-signal",
     "title": "Hive Signal Check",
     "helper": (
         "Ask an English hive-signal question (temperature, humidity, activity, "
@@ -257,19 +444,88 @@ HIVE_SIGNAL = {
 RUNTIME_OK = "Completed locally."
 
 
-def _advisor_context(advisor: dict) -> dict:
-    """Base template context for an advisor form page."""
+def _lang_from_request(request: Request) -> str:
+    lang = (request.query_params.get("lang") or "en").lower()
+    return lang if lang in LANGUAGES else "en"
+
+
+def _url_with_lang(path: str, lang: str) -> str:
+    return f"{path}?lang={lang}" if lang != "en" else path
+
+
+def _localize_advisor(advisor: dict, lang: str) -> dict:
+    text = UI_TEXT[lang]
+    names = {
+        "hive-health": text["hive_health"],
+        "site-readiness": text["site_readiness"],
+        "harvest-quality": text["harvest_quality"],
+        "forage-pollination": text["forage_pollination"],
+        "hive-signal": text["hive_signal"],
+    }
+    localized = dict(advisor)
+    localized["name"] = names.get(advisor["slug"], advisor["name"])
+    localized["href"] = _url_with_lang(f"/advisor/{advisor['slug']}", lang)
+    return localized
+
+
+def _base_context(request: Request) -> dict:
+    lang = _lang_from_request(request)
+    text = UI_TEXT[lang]
     return {
-        "title": advisor["title"],
+        "lang": lang,
+        "html_lang": "yo" if lang == "yo" else "en",
+        "text": text,
+        "is_yoruba": lang == "yo",
+        "lang_en_url": _url_with_lang(request.url.path, "en"),
+        "lang_yo_url": _url_with_lang(request.url.path, "yo"),
+        "mission_control_url": _url_with_lang("/", lang),
+        "status_url": _url_with_lang("/status", lang),
+        "not_diagnosis": NOT_DIAGNOSIS,
+        "yo_review_note": YO_REVIEW_NOTE,
+    }
+
+
+def _advisor_context(request: Request, advisor: dict) -> dict:
+    """Base template context for an advisor form page."""
+    ctx = _base_context(request)
+    lang = ctx["lang"]
+    localized = _localize_advisor(
+        {"slug": advisor["slug"], "name": advisor["title"], "blurb": ""}, lang
+    )
+    ctx.update({
+        "title": localized["name"],
         "helper": advisor["helper"],
         "page_note": advisor["page_note"],
-        "action": advisor["action"],
+        "action": _url_with_lang(advisor["action"], lang),
         "label": advisor["label"],
         "placeholder": advisor["placeholder"],
         "example_prompt": advisor["example"],
-        "not_diagnosis": NOT_DIAGNOSIS,
         "submitted_question": "",
-    }
+        "controlled_headings": YO_CONTROLLED_HEADINGS if lang == "yo" else [],
+        "controlled_guidance": YO_CONTROLLED_GUIDANCE,
+        "glossary": YO_GLOSSARY if lang == "yo" else [],
+    })
+    return ctx
+
+
+def _status_facts(lang: str) -> list[tuple[str, str]]:
+    if lang != "yo":
+        return STATUS_FACTS
+
+    text = UI_TEXT["yo"]
+    return [
+        ("Runtime", "llama.cpp"),
+        ("Model format", "GGUF"),
+        (text["model_loaded"], "Granite 3.3 2B Instruct Q4_K_M"),
+        ("Profiler model path", "model.gguf"),
+        (text["local_app"], "localhost (http://127.0.0.1:8000)"),
+        ("Retrieval", "SQLite FTS5 local knowledge base"),
+        (text["no_cloud_access"], "none during judged runtime"),
+        (text["public_challenge_edition"], "yes"),
+        ("Proprietary hardware or sensor IP included", "no"),
+        ("Metadata email finalized", "yes"),
+        ("Two official prompts configured", "yes"),
+    ]
 
 
 async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLResponse:
@@ -280,7 +536,7 @@ async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLRespo
     advisor page with the answer and sources or a safe error. Raw stdout, prompt
     text, command details, and stack traces are never shown to the user.
     """
-    ctx = _advisor_context(advisor)
+    ctx = _advisor_context(request, advisor)
 
     raw = await request.body()
     form = urllib.parse.parse_qs(
@@ -324,7 +580,7 @@ async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLRespo
 async def hive_health_form(request: Request) -> HTMLResponse:
     """Render the Hive Health Advisor form (no model load on GET)."""
     return TEMPLATES.TemplateResponse(
-        request, "advisor_form.html", _advisor_context(HIVE_HEALTH)
+        request, "advisor_form.html", _advisor_context(request, HIVE_HEALTH)
     )
 
 
@@ -338,7 +594,7 @@ async def hive_health_submit(request: Request) -> HTMLResponse:
 async def site_readiness_form(request: Request) -> HTMLResponse:
     """Render the Site Readiness Advisor form (no model load on GET)."""
     return TEMPLATES.TemplateResponse(
-        request, "advisor_form.html", _advisor_context(SITE_READINESS)
+        request, "advisor_form.html", _advisor_context(request, SITE_READINESS)
     )
 
 
@@ -352,7 +608,7 @@ async def site_readiness_submit(request: Request) -> HTMLResponse:
 async def harvest_quality_form(request: Request) -> HTMLResponse:
     """Render the Harvest Quality Coach form (no model load on GET)."""
     return TEMPLATES.TemplateResponse(
-        request, "advisor_form.html", _advisor_context(HARVEST_QUALITY)
+        request, "advisor_form.html", _advisor_context(request, HARVEST_QUALITY)
     )
 
 
@@ -366,7 +622,7 @@ async def harvest_quality_submit(request: Request) -> HTMLResponse:
 async def forage_pollination_form(request: Request) -> HTMLResponse:
     """Render the Forage and Pollination Guide form (no model load on GET)."""
     return TEMPLATES.TemplateResponse(
-        request, "advisor_form.html", _advisor_context(FORAGE_POLLINATION)
+        request, "advisor_form.html", _advisor_context(request, FORAGE_POLLINATION)
     )
 
 
@@ -380,7 +636,7 @@ async def forage_pollination_submit(request: Request) -> HTMLResponse:
 async def hive_signal_form(request: Request) -> HTMLResponse:
     """Render the Hive Signal Check form (no model load on GET)."""
     return TEMPLATES.TemplateResponse(
-        request, "advisor_form.html", _advisor_context(HIVE_SIGNAL)
+        request, "advisor_form.html", _advisor_context(request, HIVE_SIGNAL)
     )
 
 
@@ -393,29 +649,57 @@ async def hive_signal_submit(request: Request) -> HTMLResponse:
 @app.get("/", response_class=HTMLResponse)
 async def mission_control(request: Request) -> HTMLResponse:
     """Mission Control: overview and navigation cards."""
+    ctx = _base_context(request)
+    lang = ctx["lang"]
+    text = ctx["text"]
+    ctx.update({
+        "description": APP_DESCRIPTION,
+        "advisors": [_localize_advisor(a, lang) for a in ADVISORS],
+        "status_card_url": _url_with_lang("/status", lang),
+        "status_card_title": text["offline_status"],
+        "status_card_blurb": (
+            "Runtime, model, retrieval, compliance, and benchmark evidence."
+        ),
+        "status_markers": [
+            text["offline_mode"],
+            text["local_app"],
+            text["no_cloud_access"],
+            text["public_challenge_edition"],
+            text["field_guidance_only"],
+        ],
+        "glossary": YO_GLOSSARY if lang == "yo" else [],
+    })
     return TEMPLATES.TemplateResponse(
         request,
         "index.html",
-        {
-            "description": APP_DESCRIPTION,
-            "advisors": ADVISORS,
-            "not_diagnosis": NOT_DIAGNOSIS,
-        },
+        ctx,
     )
 
 
 @app.get("/status", response_class=HTMLResponse)
 async def offline_system_status(request: Request) -> HTMLResponse:
     """Offline System Status: runtime, model, retrieval, compliance, evidence."""
+    ctx = _base_context(request)
+    lang = ctx["lang"]
+    text = ctx["text"]
+    ctx.update({
+        "title": text["offline_status"],
+        "facts": _status_facts(lang),
+        "benchmarks": BENCHMARK_EVIDENCE,
+        "accuracy_status": ACCURACY_STATUS,
+        "status_markers": [
+            text["offline_mode"],
+            text["model_loaded"],
+            text["local_app"],
+            text["no_cloud_access"],
+            text["public_challenge_edition"],
+            text["field_guidance_only"],
+        ],
+    })
     return TEMPLATES.TemplateResponse(
         request,
         "status.html",
-        {
-            "facts": STATUS_FACTS,
-            "benchmarks": BENCHMARK_EVIDENCE,
-            "accuracy_status": ACCURACY_STATUS,
-            "not_diagnosis": NOT_DIAGNOSIS,
-        },
+        ctx,
     )
 
 
@@ -428,7 +712,7 @@ async def advisor_placeholder(slug: str, request: Request) -> HTMLResponse:
     return TEMPLATES.TemplateResponse(
         request,
         "advisor.html",
-        {"advisor": advisor, "not_diagnosis": NOT_DIAGNOSIS},
+        {**_base_context(request), "advisor": _localize_advisor(advisor, _lang_from_request(request))},
     )
 
 

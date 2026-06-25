@@ -9,13 +9,17 @@
   <label for="question">{{ label }}</label>
   <textarea id="question" name="question" rows="4"
     placeholder="{{ placeholder }}">{{ submitted_question }}</textarea>
-  <button type="submit">Ask locally</button>
+  <button type="submit">{{ text.ask_locally }}</button>
 </form>
 
 <details class="example">
-  <summary>Example prompt (does not run automatically)</summary>
+  <summary>{{ text.example_prompt }} ({{ text.example_hint }})</summary>
   <p>{{ example_prompt }}</p>
 </details>
+
+{% if is_yoruba %}
+<p class="review-note">{{ yo_review_note }}</p>
+{% endif %}
 
 {% if validation_error %}
 <p class="validation">{{ validation_error }}</p>
@@ -27,11 +31,28 @@
 
 {% if answer %}
 <section class="result">
-  <h2>Answer</h2>
+  {% if is_yoruba %}
+  <h2>Àwọn template ìtọ́nisọ́nà Yorùbá</h2>
+  <div class="controlled-template">
+    {% for key, heading in controlled_headings %}
+    <section>
+      <h3>{{ heading }}</h3>
+      {% if key == "field_observation_summary" and submitted_question %}
+      <p>{{ submitted_question }}</p>
+      {% else %}
+      <p>{{ controlled_guidance[key] }}</p>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+  <h2>{{ text.english_answer }}</h2>
+  {% else %}
+  <h2>{{ text.answer }}</h2>
+  {% endif %}
   <div class="answer">{{ answer }}</div>
 
   {% if sources %}
-  <h2>Retrieved sources</h2>
+  <h2>{{ text.retrieved_sources }}</h2>
   <ul class="sources">
     {% for s in sources %}
       <li><span class="src-file">{{ s.source_file }}</span> <span class="src-sep">&middot;</span> <span class="src-head">{{ s.heading }}</span></li>
@@ -43,5 +64,24 @@
 </section>
 {% endif %}
 
-<p><a class="link" href="/">&larr; Back to Mission Control</a></p>
+{% if is_yoruba and glossary %}
+<section class="glossary glossary-compact">
+  <h2>{{ text.glossary }}</h2>
+  {% for group in glossary %}
+  <article class="glossary-group">
+    <h3>{{ group.yo_category }}</h3>
+    <dl>
+      {% for english, yoruba in group.terms[:3] %}
+      <div>
+        <dt>{{ english }}</dt>
+        <dd>{{ yoruba }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+<p><a class="link" href="{{ mission_control_url }}">&larr; {{ text.back_to_mission_control }}</a></p>
 {% endblock %}

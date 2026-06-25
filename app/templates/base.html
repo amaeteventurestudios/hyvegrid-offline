@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ html_lang | default('en') }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,10 +9,15 @@
 <body>
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="/">HyveGrid Offline</a>
+      <a class="brand" href="{{ mission_control_url | default('/') }}">HyveGrid Offline</a>
       <nav class="nav">
-        <a href="/">Mission Control</a>
-        <a href="/status">Offline System Status</a>
+        <a href="{{ mission_control_url | default('/') }}">{{ text.mission_control | default('Mission Control') }}</a>
+        <a href="{{ status_url | default('/status') }}">{{ text.offline_status | default('Offline System Status') }}</a>
+        <span class="lang-toggle" aria-label="{{ text.language | default('Language') }}">
+          <a href="{{ lang_en_url | default('/') }}" {% if lang == "en" %}aria-current="true"{% endif %}>{{ text.english | default('English') }}</a>
+          <span>/</span>
+          <a href="{{ lang_yo_url | default('/?lang=yo') }}" {% if lang == "yo" %}aria-current="true"{% endif %}>{{ text.yoruba | default('Yoruba') }}</a>
+        </span>
       </nav>
     </div>
   </header>
@@ -22,6 +27,9 @@
   <footer class="wrap footer">
     <p>HyveGrid Offline &middot; ADTC 2026 public challenge edition &middot; local offline build, no cloud access during judged runtime.</p>
     <p class="muted">{{ not_diagnosis }}</p>
+    {% if is_yoruba %}
+    <p class="muted">{{ yo_review_note }}</p>
+    {% endif %}
   </footer>
 </body>
 </html>
