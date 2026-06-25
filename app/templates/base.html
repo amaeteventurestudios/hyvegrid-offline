@@ -13,11 +13,14 @@
       <nav class="nav">
         <a href="{{ mission_control_url | default('/') }}">{{ text.mission_control | default('Mission Control') }}</a>
         <a href="{{ status_url | default('/status') }}">{{ text.offline_status | default('Offline System Status') }}</a>
-        <span class="lang-toggle" aria-label="{{ text.language | default('Language') }}">
-          <a href="{{ lang_en_url | default('/') }}" {% if lang == "en" %}aria-current="true"{% endif %}>{{ text.english | default('English') }}</a>
-          <span>/</span>
-          <a href="{{ lang_yo_url | default('/?lang=yo') }}" {% if lang == "yo" %}aria-current="true"{% endif %}>{{ text.yoruba | default('Yoruba') }}</a>
-        </span>
+        <label class="language-select" for="language-select">
+          <span>{{ text.language | default('Language') }}</span>
+          <select id="language-select" onchange="if (this.value) window.location.href = this.value;">
+            {% for option in language_options %}
+            <option value="{{ option.url }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
       </nav>
     </div>
   </header>

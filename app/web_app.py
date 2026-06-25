@@ -59,6 +59,8 @@ LANGUAGES = {
     "yo": {"code": "yo", "name": "Yoruba", "native": "Yorùbá"},
 }
 
+ACTIVE_LANGUAGE_CODES = ("en", "yo")
+
 YO_REVIEW_NOTE = (
     "Yoruba field labels and templates are controlled draft support and should "
     "be reviewed by a fluent Yoruba speaker before final submission."
@@ -89,7 +91,7 @@ UI_TEXT = {
         "glossary": "Yoruba field glossary",
         "language": "Language",
         "english": "English",
-        "yoruba": "Yoruba",
+        "yoruba": "Yorùbá",
         "available_now": "Available now",
         "planned_for_demo": "Planned for demo",
         "system_facts": "System facts",
@@ -471,6 +473,15 @@ def _localize_advisor(advisor: dict, lang: str) -> dict:
 def _base_context(request: Request) -> dict:
     lang = _lang_from_request(request)
     text = UI_TEXT[lang]
+    language_options = [
+        {
+            "code": code,
+            "label": text["english"] if code == "en" else text["yoruba"],
+            "url": _url_with_lang(request.url.path, code),
+            "selected": code == lang,
+        }
+        for code in ACTIVE_LANGUAGE_CODES
+    ]
     return {
         "lang": lang,
         "html_lang": "yo" if lang == "yo" else "en",
@@ -478,6 +489,7 @@ def _base_context(request: Request) -> dict:
         "is_yoruba": lang == "yo",
         "lang_en_url": _url_with_lang(request.url.path, "en"),
         "lang_yo_url": _url_with_lang(request.url.path, "yo"),
+        "language_options": language_options,
         "mission_control_url": _url_with_lang("/", lang),
         "status_url": _url_with_lang("/status", lang),
         "not_diagnosis": NOT_DIAGNOSIS,

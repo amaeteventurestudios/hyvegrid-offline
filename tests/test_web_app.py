@@ -45,6 +45,14 @@ class WebAppTests(unittest.TestCase):
         ]:
             self.assertIn(name, resp.text, f"Missing module card: {name}")
 
+    def test_language_dropdown_defaults_to_english_on_mission_control(self):
+        resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('<label class="language-select" for="language-select">', resp.text)
+        self.assertIn('<select id="language-select"', resp.text)
+        self.assertIn('<option value="/" selected>English</option>', resp.text)
+        self.assertIn('<option value="/?lang=yo" >Yorùbá</option>', resp.text)
+
     def test_mission_control_yoruba_mode_labels_and_glossary(self):
         resp = self.client.get("/?lang=yo")
         self.assertEqual(resp.status_code, 200)
@@ -59,6 +67,25 @@ class WebAppTests(unittest.TestCase):
             "/advisor/hive-health?lang=yo",
         ]:
             self.assertIn(needle, resp.text)
+        self.assertIn('<option value="/" >Gẹ̀ẹ́sì</option>', resp.text)
+        self.assertIn('<option value="/?lang=yo" selected>Yorùbá</option>', resp.text)
+
+    def test_language_dropdown_uses_same_page_urls(self):
+        resp = self.client.get("/advisor/hive-health?lang=yo")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(
+            '<option value="/advisor/hive-health" >Gẹ̀ẹ́sì</option>',
+            resp.text,
+        )
+        self.assertIn(
+            '<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>',
+            resp.text,
+        )
+
+        resp = self.client.get("/status")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('<option value="/status" selected>English</option>', resp.text)
+        self.assertIn('<option value="/status?lang=yo" >Yorùbá</option>', resp.text)
 
     def test_status_returns_200(self):
         resp = self.client.get("/status")
