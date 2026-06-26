@@ -30,6 +30,7 @@ data/knowledge/*.db-*
 # Benchmark artifacts
 artifacts/*.json
 artifacts/*.log
+artifacts/eval/*preview*.log
 artifacts/eval/raw_outputs/
 artifacts/eval/comparison.md
 artifacts/eval/scoring_sheet.csv
