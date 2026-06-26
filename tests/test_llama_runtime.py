@@ -78,14 +78,14 @@ class RunLlamaPromptTests(unittest.TestCase):
         cmd = run_mock.call_args[0][0]
         for flag in REQUIRED_FLAGS:
             self.assertIn(flag, cmd)
-        self.assertEqual(cmd[cmd.index("-m") + 1], "model/x.gguf")
+        self.assertTrue(cmd[cmd.index("-m") + 1].endswith("/model/x.gguf"))
         self.assertEqual(cmd[cmd.index("-p") + 1], "PROMPT")
         self.assertEqual(cmd[cmd.index("-n") + 1], "64")
         # Successful run: answer is the stripped stdout.
         self.assertEqual(result["answer"], "possible concern")
         self.assertEqual(result["returncode"], 0)
         self.assertFalse(result["timed_out"])
-        self.assertEqual(result["model_path"], "model/x.gguf")
+        self.assertTrue(result["model_path"].endswith("/model/x.gguf"))
         self.assertEqual(result["llama_bin"], "/bin/llama-cli")
 
     @mock.patch("app.llama_runtime.subprocess.run")
@@ -303,6 +303,25 @@ class NoCloudApiTests(unittest.TestCase):
     def test_defaults_are_local_paths(self):
         self.assertTrue(rt.DEFAULT_LLAMA_BIN.startswith("/"))
         self.assertTrue(rt.DEFAULT_MODEL_PATH.endswith(".gguf"))
+
+    def test_resolves_default_model_from_repo_root(self):
+        resolved = rt.resolve_runtime_path(rt.DEFAULT_MODEL_PATH)
+        self.assertTrue(resolved.endswith("/model.gguf"))
+        self.assertTrue(Path(resolved).is_absolute())
+
+    def test_runtime_diagnostics_reports_configured_paths(self):
+        diagnostics = rt.runtime_diagnostics(
+            model_path="model.gguf",
+            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+        )
+        self.assertTrue(diagnostics["repo_root"].endswith("hyvegrid-offline"))
+        self.assertTrue(diagnostics["model_path"].endswith("/model.gguf"))
+        self.assertEqual(
+            diagnostics["llama_bin"],
+            "/home/amaete/llama.cpp/build/bin/llama-cli",
+        )
+        for key in ["model_exists", "llama_exists", "llama_executable"]:
+            self.assertIn(key, diagnostics)
 
 
 if __name__ == "__main__":

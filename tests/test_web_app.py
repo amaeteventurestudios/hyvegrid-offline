@@ -207,7 +207,12 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Hive Health Advisor", resp.text)
         self.assertIn("<form", resp.text)
+        self.assertIn('method="post"', resp.text)
+        self.assertIn('data-local-advisor-form', resp.text)
         self.assertIn('name="question"', resp.text)
+        self.assertIn('type="submit"', resp.text)
+        self.assertIn("Working locally...", resp.text)
+        self.assertIn("Running the local Granite model through llama.cpp", resp.text)
         # Example prompt is shown but not auto-run.
         self.assertIn("Example prompt", resp.text)
         self.assertIn("low hive activity", resp.text)
@@ -271,6 +276,8 @@ class WebAppTests(unittest.TestCase):
             )
         self.assertEqual(resp.status_code, 200)
         self.assertIn("HyveGrid could not complete this local answer", resp.text)
+        self.assertIn("local model runtime failed", resp.text)
+        self.assertIn("Check the server log", resp.text)
         # No stack trace or internal detail leaks to the user.
         self.assertNotIn("secret internal detail boom", resp.text)
         self.assertNotIn("Traceback", resp.text)
@@ -287,7 +294,10 @@ class WebAppTests(unittest.TestCase):
             resp = self.client.get(f"/advisor/{slug}")
             self.assertEqual(resp.status_code, 200, slug)
             self.assertIn("<form", resp.text)
+            self.assertIn('method="post"', resp.text)
+            self.assertIn('data-local-advisor-form', resp.text)
             self.assertIn('name="question"', resp.text)
+            self.assertIn("Running the local Granite model through llama.cpp", resp.text)
 
     # --- Harvest Quality / Forage & Pollination / Hive Signal (wired) -------
 
@@ -441,8 +451,9 @@ class WebAppTests(unittest.TestCase):
             )
         self.assertEqual(resp.status_code, 200)
         self.assertIn(
-            "HyveGrid could not complete this local site-readiness answer", resp.text
+            "HyveGrid could not complete this local answer", resp.text
         )
+        self.assertIn("local model runtime failed", resp.text)
         self.assertNotIn("secret internal detail boom", resp.text)
         self.assertNotIn("Traceback", resp.text)
 

@@ -14,14 +14,19 @@ Contract:
   caller can decide what to do.
 """
 
+import logging
 import os
 import re
 import subprocess
+from pathlib import Path
 
 from app.prompt_builder import build_prompt_with_retrieval
 
+LOGGER = logging.getLogger(__name__)
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LLAMA_BIN = "/home/amaete/llama.cpp/build/bin/llama-cli"
-DEFAULT_MODEL_PATH = "model/granite-3.3-2b-instruct-q4_k_m.gguf"
+DEFAULT_MODEL_PATH = "model.gguf"
 
 
 def _to_text(value) -> str:
@@ -31,6 +36,57 @@ def _to_text(value) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", "replace")
     return value
+
+
+def resolve_runtime_path(path: str) -> str:
+    """Resolve a runtime path deterministically from the repo root.
+
+    Absolute paths are preserved. Relative paths are anchored at the HyveGrid
+    repo root so uvicorn can be launched from any working directory.
+    """
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        candidate = REPO_ROOT / candidate
+    return os.path.abspath(candidate)
+
+
+def runtime_diagnostics(
+    model_path: str = DEFAULT_MODEL_PATH,
+    llama_bin: str = DEFAULT_LLAMA_BIN,
+) -> dict:
+    """Return path diagnostics for server logs and focused tests."""
+    resolved_model_path = resolve_runtime_path(model_path)
+    resolved_llama_bin = resolve_runtime_path(llama_bin)
+    return {
+        "repo_root": str(REPO_ROOT),
+        "model_path": resolved_model_path,
+        "model_exists": os.path.isfile(resolved_model_path),
+        "llama_bin": resolved_llama_bin,
+        "llama_exists": os.path.isfile(resolved_llama_bin),
+        "llama_executable": os.access(resolved_llama_bin, os.X_OK),
+    }
+
+
+def log_runtime_diagnostics(
+    model_path: str = DEFAULT_MODEL_PATH,
+    llama_bin: str = DEFAULT_LLAMA_BIN,
+    *,
+    level: int = logging.INFO,
+) -> dict:
+    """Log local model/runtime paths without exposing prompts or stdout."""
+    diagnostics = runtime_diagnostics(model_path=model_path, llama_bin=llama_bin)
+    LOGGER.log(
+        level,
+        "HyveGrid runtime diagnostics: repo_root=%s model_path=%s "
+        "model_exists=%s llama_bin=%s llama_exists=%s llama_executable=%s",
+        diagnostics["repo_root"],
+        diagnostics["model_path"],
+        diagnostics["model_exists"],
+        diagnostics["llama_bin"],
+        diagnostics["llama_exists"],
+        diagnostics["llama_executable"],
+    )
+    return diagnostics
 
 
 # --- Output cleaning -----------------------------------------------------
@@ -177,19 +233,27 @@ def run_llama_prompt(
 
     Raises RuntimeError if the llama binary or model file is missing.
     """
-    if not os.path.isfile(llama_bin):
+    resolved_llama_bin = resolve_runtime_path(llama_bin)
+    resolved_model_path = resolve_runtime_path(model_path)
+    log_runtime_diagnostics(
+        model_path=resolved_model_path,
+        llama_bin=resolved_llama_bin,
+        level=logging.INFO,
+    )
+
+    if not os.path.isfile(resolved_llama_bin):
         raise RuntimeError(
-            f"llama.cpp binary not found at {llama_bin!r}. "
+            f"llama.cpp binary not found at {resolved_llama_bin!r}. "
             "Build llama.cpp and check the path."
         )
-    if not os.path.isfile(model_path):
+    if not os.path.isfile(resolved_model_path):
         raise RuntimeError(
-            f"Model file not found at {model_path!r}. "
+            f"Model file not found at {resolved_model_path!r}. "
             "Download or link the GGUF model and check the path."
         )
 
     command = _build_command(
-        llama_bin, model_path, prompt, max_tokens, temperature, threads
+        resolved_llama_bin, resolved_model_path, prompt, max_tokens, temperature, threads
     )
 
     result = {
@@ -197,8 +261,8 @@ def run_llama_prompt(
         "stdout": "",
         "stderr": "",
         "returncode": None,
-        "model_path": model_path,
-        "llama_bin": llama_bin,
+        "model_path": resolved_model_path,
+        "llama_bin": resolved_llama_bin,
         "timed_out": False,
     }
 

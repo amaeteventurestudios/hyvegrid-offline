@@ -5,12 +5,31 @@
 <p class="lede">{{ helper }}</p>
 <p class="badge">{{ page_note }}</p>
 
-<form class="ask-form" method="post" action="{{ action }}">
+<form class="ask-form" method="post" action="{{ action }}" data-local-advisor-form>
   <label for="question">{{ label }}</label>
   <textarea id="question" name="question" rows="4"
     placeholder="{{ placeholder }}">{{ submitted_question }}</textarea>
-  <button type="submit">{{ text.ask_locally }}</button>
+  <button type="submit" data-submit-label="{{ text.ask_locally }}">{{ text.ask_locally }}</button>
+  <p class="local-runtime-loading" data-local-runtime-loading hidden>
+    Running the local Granite model through llama.cpp. This may take several minutes on the offline laptop profile. Please do not refresh.
+  </p>
 </form>
+
+<script>
+  document.querySelectorAll("[data-local-advisor-form]").forEach((form) => {
+    form.addEventListener("submit", () => {
+      const button = form.querySelector("button[type='submit']");
+      const loading = form.querySelector("[data-local-runtime-loading]");
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Working locally...";
+      }
+      if (loading) {
+        loading.hidden = false;
+      }
+    });
+  });
+</script>
 
 <details class="example">
   <summary>{{ text.example_prompt }} ({{ text.example_hint }})</summary>

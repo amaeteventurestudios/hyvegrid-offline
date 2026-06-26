@@ -247,6 +247,22 @@ body {
   font-size: 0.95rem;
 }
 .ask-form button:hover { filter: brightness(1.05); }
+.ask-form button:disabled {
+  cursor: wait;
+  opacity: 0.78;
+  filter: none;
+}
+.local-runtime-loading {
+  margin: 12px 0 0;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  color: var(--ink);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+.local-runtime-loading[hidden] { display: none; }
 
 .example {
   margin-top: 14px;

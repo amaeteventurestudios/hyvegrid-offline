@@ -26,6 +26,7 @@ Then open http://127.0.0.1:8000
 """
 
 import asyncio
+import logging
 import urllib.parse
 from pathlib import Path
 
@@ -38,11 +39,12 @@ from fastapi.templating import Jinja2Templates
 # The existing offline answer path: retrieval + prompt builder + llama.cpp run
 # + output cleanup. Imported here so the Hive Health Advisor can call it without
 # duplicating that logic. Tests monkeypatch this name.
-from app.llama_runtime import answer_question
+from app.llama_runtime import answer_question, log_runtime_diagnostics
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 STATIC_DIR = BASE_DIR / "static"
+LOGGER = logging.getLogger(__name__)
 
 app = FastAPI(
     title="HyveGrid Offline",
@@ -364,6 +366,11 @@ ACCURACY_STATUS = "No local hidden-validation accuracy score is claimed."
 NOT_DIAGNOSIS = (
     "HyveGrid is a field triage assistant, not a certified disease diagnosis tool."
 )
+LOCAL_RUNTIME_ERROR = (
+    "HyveGrid could not complete this local answer. The advisor request reached "
+    "the offline app, but the local model runtime failed. Check the server log "
+    "for the exact model/runtime path issue."
+)
 
 # Wired-advisor copy and messages. Each config holds the template fields the
 # shared form template and shared submit logic need.
@@ -408,10 +415,7 @@ HIVE_HEALTH = {
     "placeholder": "Describe what you are seeing at the hive...",
     "example": HIVE_HEALTH_EXAMPLE,
     "validation": "Please enter a hive-health question before submitting.",
-    "error": (
-        "HyveGrid could not complete this local answer. Confirm the model is "
-        "downloaded and llama.cpp is available, then try again."
-    ),
+    "error": LOCAL_RUNTIME_ERROR,
 }
 
 SITE_READINESS = {
@@ -431,10 +435,7 @@ SITE_READINESS = {
     "placeholder": "Describe the apiary site you are evaluating...",
     "example": SITE_READINESS_EXAMPLE,
     "validation": "Please enter a site-readiness question before submitting.",
-    "error": (
-        "HyveGrid could not complete this local site-readiness answer. Confirm "
-        "the model is downloaded and llama.cpp is available, then try again."
-    ),
+    "error": LOCAL_RUNTIME_ERROR,
 }
 
 HARVEST_QUALITY = {
@@ -454,10 +455,7 @@ HARVEST_QUALITY = {
     "placeholder": "Describe the harvest, frames, and storage conditions...",
     "example": HARVEST_QUALITY_EXAMPLE,
     "validation": "Please enter a harvest-quality question before submitting.",
-    "error": (
-        "HyveGrid could not complete this local harvest-quality answer. Confirm "
-        "the model is downloaded and llama.cpp is available, then try again."
-    ),
+    "error": LOCAL_RUNTIME_ERROR,
 }
 
 FORAGE_POLLINATION = {
@@ -477,10 +475,7 @@ FORAGE_POLLINATION = {
     "placeholder": "Describe the crops, flowering season, and pesticide context...",
     "example": FORAGE_POLLINATION_EXAMPLE,
     "validation": "Please enter a forage and pollination question before submitting.",
-    "error": (
-        "HyveGrid could not complete this local forage and pollination answer. "
-        "Confirm the model is downloaded and llama.cpp is available, then try again."
-    ),
+    "error": LOCAL_RUNTIME_ERROR,
 }
 
 HIVE_SIGNAL = {
@@ -500,10 +495,7 @@ HIVE_SIGNAL = {
     "placeholder": "Describe the signals you are observing at the hive...",
     "example": HIVE_SIGNAL_EXAMPLE,
     "validation": "Please enter a hive-signal question before submitting.",
-    "error": (
-        "HyveGrid could not complete this local hive-signal answer. Confirm the "
-        "model is downloaded and llama.cpp is available, then try again."
-    ),
+    "error": LOCAL_RUNTIME_ERROR,
 }
 
 RUNTIME_OK = "Completed locally."
@@ -639,9 +631,16 @@ async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLRespo
     # answer_question() is blocking (model load + generation) and can take
     # minutes; run it off the event loop so the server stays responsive.
     try:
+        log_runtime_diagnostics()
         bundle = await asyncio.to_thread(answer_question, question)
-    except Exception:
+    except Exception as exc:
         # Do not expose stack traces or internal details to the user.
+        LOGGER.error(
+            "Local advisor generation failed for %s: %s: %s",
+            advisor["slug"],
+            type(exc).__name__,
+            exc,
+        )
         ctx["error_message"] = advisor["error"]
         return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
 
@@ -653,6 +652,15 @@ async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLRespo
         and bool(answer)
     )
     if not ok:
+        LOGGER.error(
+            "Local advisor runtime returned no answer for %s: returncode=%s "
+            "timed_out=%s stderr_chars=%s stdout_chars=%s",
+            advisor["slug"],
+            runtime.get("returncode"),
+            runtime.get("timed_out"),
+            len(runtime.get("stderr") or ""),
+            len(runtime.get("stdout") or ""),
+        )
         ctx["error_message"] = advisor["error"]
         return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
 
