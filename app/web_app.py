@@ -572,6 +572,9 @@ def _advisor_context(request: Request, advisor: dict) -> dict:
     )
     ctx.update({
         "title": localized["name"],
+        "advisor_slug": advisor["slug"],
+        "advisor_asset": ADVISOR_ASSETS.get(advisor["slug"]),
+        "advisor_logo_mark": MISSION_ASSETS["logo_mark"],
         "helper": advisor["helper"],
         "page_note": advisor["page_note"],
         "action": _url_with_lang(advisor["action"], lang),

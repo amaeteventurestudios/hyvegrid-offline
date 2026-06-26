@@ -206,6 +206,11 @@ class WebAppTests(unittest.TestCase):
         resp = self.client.get("/advisor/hive-health")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Hive Health Advisor", resp.text)
+        self.assertIn('body class="advisor-page advisor-hive-health"', resp.text)
+        self.assertIn("/static/assets/card-hive-health.webp", resp.text)
+        self.assertIn("/static/assets/logo-honeycomb-mark.webp", resp.text)
+        self.assertIn("Granite 3.3 2B", resp.text)
+        self.assertIn("llama.cpp", resp.text)
         self.assertIn("<form", resp.text)
         self.assertIn('method="post"', resp.text)
         self.assertIn('data-local-advisor-form', resp.text)
@@ -247,6 +252,9 @@ class WebAppTests(unittest.TestCase):
             "Yoruba field labels and templates are controlled draft support",
         ]:
             self.assertIn(needle, resp.text)
+        self.assertIn('body class="advisor-page advisor-hive-health"', resp.text)
+        self.assertIn("/static/assets/card-hive-health.webp", resp.text)
+        self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
 
     def test_hive_health_post_displays_sources(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()):
@@ -284,15 +292,19 @@ class WebAppTests(unittest.TestCase):
 
     def test_all_advisors_are_wired(self):
         # All five advisors now render a real form; none remain placeholders.
-        for slug in [
-            "hive-health",
-            "site-readiness",
-            "harvest-quality",
-            "forage-pollination",
-            "hive-signal",
-        ]:
+        expected_assets = {
+            "hive-health": "/static/assets/card-hive-health.webp",
+            "site-readiness": "/static/assets/card-site-readiness.webp",
+            "harvest-quality": "/static/assets/card-harvest-quality.webp",
+            "forage-pollination": "/static/assets/card-forage-pollination.webp",
+            "hive-signal": "/static/assets/card-hive-signal.webp",
+        }
+        for slug, asset in expected_assets.items():
             resp = self.client.get(f"/advisor/{slug}")
             self.assertEqual(resp.status_code, 200, slug)
+            self.assertIn(f'body class="advisor-page advisor-{slug}"', resp.text)
+            self.assertIn(asset, resp.text)
+            self.assertIn("/static/assets/logo-honeycomb-mark.webp", resp.text)
             self.assertIn("<form", resp.text)
             self.assertIn('method="post"', resp.text)
             self.assertIn('data-local-advisor-form', resp.text)

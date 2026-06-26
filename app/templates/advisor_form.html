@@ -1,40 +1,57 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} &middot; HyveGrid Offline{% endblock %}
+{% block body_class %}advisor-page advisor-{{ advisor_slug }}{% endblock %}
 {% block content %}
-<h1>{{ title }}</h1>
-<p class="lede">{{ helper }}</p>
-<p class="badge">{{ page_note }}</p>
+<section class="advisor-hero">
+  <div class="advisor-hero-mark">
+    <img class="advisor-logo-mark" src="{{ advisor_logo_mark }}" alt="" width="72" height="72">
+    <img class="advisor-card-art" src="{{ advisor_asset }}" alt="" width="180" height="180">
+  </div>
+  <div class="advisor-hero-copy">
+    <p class="advisor-kicker">HyveGrid Offline</p>
+    <h1>{{ title }}</h1>
+    <p class="lede">{{ helper }}</p>
+    <div class="advisor-status-row" aria-label="Local runtime status">
+      <span>{{ text.offline_mode }}</span>
+      <span>llama.cpp</span>
+      <span>Granite 3.3 2B</span>
+    </div>
+    <p class="advisor-caution">{{ page_note }}</p>
+  </div>
+</section>
 
-<form class="ask-form" method="post" action="{{ action }}" data-local-advisor-form>
-  <label for="question">{{ label }}</label>
-  <textarea id="question" name="question" rows="4"
-    placeholder="{{ placeholder }}">{{ submitted_question }}</textarea>
-  <button type="submit" data-submit-label="{{ text.ask_locally }}">{{ text.ask_locally }}</button>
-  <p class="local-runtime-loading" data-local-runtime-loading hidden>
-    Running the local Granite model through llama.cpp. This may take several minutes on the offline laptop profile. Please do not refresh.
-  </p>
-</form>
+<section class="advisor-panel advisor-question-panel">
+  <form class="ask-form" method="post" action="{{ action }}" data-local-advisor-form>
+    <label for="question">{{ label }}</label>
+    <textarea id="question" name="question" rows="5"
+      placeholder="{{ placeholder }}">{{ submitted_question }}</textarea>
+    <button type="submit" data-submit-label="{{ text.ask_locally }}">{{ text.ask_locally }}</button>
+    <p class="local-runtime-loading" data-local-runtime-loading hidden>
+      Running the local Granite model through llama.cpp. This may take several minutes on the offline laptop profile. Please do not refresh.
+    </p>
+  </form>
 
-<script>
-  document.querySelectorAll("[data-local-advisor-form]").forEach((form) => {
-    form.addEventListener("submit", () => {
-      const button = form.querySelector("button[type='submit']");
-      const loading = form.querySelector("[data-local-runtime-loading]");
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Working locally...";
-      }
-      if (loading) {
-        loading.hidden = false;
-      }
+  <script>
+    document.querySelectorAll("[data-local-advisor-form]").forEach((form) => {
+      form.addEventListener("submit", () => {
+        const button = form.querySelector("button[type='submit']");
+        const loading = form.querySelector("[data-local-runtime-loading]");
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Working locally...";
+        }
+        if (loading) {
+          loading.hidden = false;
+        }
+      });
     });
-  });
-</script>
+  </script>
 
-<details class="example">
-  <summary>{{ text.example_prompt }} ({{ text.example_hint }})</summary>
-  <p>{{ example_prompt }}</p>
-</details>
+  <details class="example">
+    <summary>{{ text.example_prompt }} ({{ text.example_hint }})</summary>
+    <p>{{ example_prompt }}</p>
+  </details>
+</section>
 
 {% if is_yoruba %}
 <p class="review-note">{{ yo_review_note }}</p>
@@ -49,7 +66,7 @@
 {% endif %}
 
 {% if answer %}
-<section class="result">
+<section class="result advisor-panel">
   {% if is_yoruba %}
   <h2>Àwọn template ìtọ́nisọ́nà Yorùbá</h2>
   <div class="controlled-template">
@@ -84,7 +101,7 @@
 {% endif %}
 
 {% if is_yoruba and glossary %}
-<section class="glossary glossary-compact">
+<section class="glossary glossary-compact advisor-panel">
   <h2>{{ text.glossary }}</h2>
   {% for group in glossary %}
   <article class="glossary-group">
@@ -102,5 +119,5 @@
 </section>
 {% endif %}
 
-<p><a class="link" href="{{ mission_control_url }}">&larr; {{ text.back_to_mission_control }}</a></p>
+<p class="advisor-back-link"><a class="link" href="{{ mission_control_url }}">&larr; {{ text.back_to_mission_control }}</a></p>
 {% endblock %}
