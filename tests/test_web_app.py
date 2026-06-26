@@ -218,11 +218,83 @@ class WebAppTests(unittest.TestCase):
         self.assertIn('type="submit"', resp.text)
         self.assertIn("Working locally...", resp.text)
         self.assertIn("Running the local Granite model through llama.cpp", resp.text)
+        self.assertIn("data-local-runtime-loading", resp.text)
+        self.assertIn("data-submit-label", resp.text)
         # Example prompt is shown but not auto-run.
         self.assertIn("Example prompt", resp.text)
         self.assertIn("low hive activity", resp.text)
         # No answer section on a plain GET.
         self.assertNotIn("Completed locally", resp.text)
+
+    def test_advisor_pages_include_walkthrough_container_and_script(self):
+        for slug in [
+            "hive-health",
+            "site-readiness",
+            "harvest-quality",
+            "forage-pollination",
+            "hive-signal",
+        ]:
+            resp = self.client.get(f"/advisor/{slug}")
+            self.assertEqual(resp.status_code, 200, slug)
+            for needle in [
+                "data-hive-walkthrough",
+                "Hive State Walkthrough",
+                "Local walkthrough while Granite thinks",
+                "Guided field walkthrough",
+                "Visual inspection support while the local model prepares guidance",
+                "Manual observations or sample edge-signal inputs",
+                "beekeeper-avatar",
+                "bee-dot",
+                "ant-dot",
+                "data-walkthrough-step",
+                "data-walkthrough-step-item",
+                "window.setInterval",
+                "Working locally...",
+                "data-local-runtime-loading",
+                "data-submit-label",
+            ]:
+                self.assertIn(needle, resp.text, f"{slug} missing {needle!r}")
+
+    def test_hive_health_walkthrough_steps_render(self):
+        resp = self.client.get("/advisor/hive-health")
+        self.assertEqual(resp.status_code, 200)
+        for needle in [
+            "Walking to hive",
+            "Checking entrance activity",
+            "Looking for ant trails near the stand",
+            "Inspecting brood pattern",
+            "Confirming normal smell report",
+            "Checking food stores",
+            "Preparing local guidance",
+        ]:
+            self.assertIn(needle, resp.text)
+
+    def test_site_readiness_walkthrough_steps_render(self):
+        resp = self.client.get("/advisor/site-readiness")
+        self.assertEqual(resp.status_code, 200)
+        for needle in [
+            "Reviewing proposed apiary area",
+            "Checking crop zones",
+            "Checking water reliability",
+            "Checking shade and wind exposure",
+            "Looking for pesticide risk",
+            "Checking human and livestock safety",
+            "Preparing placement guidance",
+        ]:
+            self.assertIn(needle, resp.text)
+
+    def test_advisor_language_dropdown_and_yoruba_route_still_render(self):
+        resp = self.client.get("/advisor/hive-health")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('<label class="language-select" for="language-select">', resp.text)
+        self.assertIn('<select id="language-select"', resp.text)
+
+        resp = self.client.get("/advisor/hive-health?lang=yo")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Olùrànlọ́wọ́ Ìlera Ilé Oyin", resp.text)
+        self.assertIn("Hive State Walkthrough", resp.text)
+        self.assertIn("Walking to hive", resp.text)
+        self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
 
     def test_hive_health_post_valid_calls_answer_and_displays(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:

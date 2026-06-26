@@ -31,17 +31,72 @@
     </p>
   </form>
 
+  <section class="hive-walkthrough" data-hive-walkthrough hidden aria-live="polite">
+    <div class="walkthrough-head">
+      <p class="walkthrough-kicker">Local walkthrough while Granite thinks</p>
+      <h2>Hive State Walkthrough</h2>
+      <p>Visual inspection support while the local model prepares guidance.</p>
+    </div>
+    <div class="walkthrough-stage" aria-hidden="true">
+      <div class="walkthrough-sky"></div>
+      <div class="walkthrough-field"></div>
+      <div class="walkthrough-hive">
+        <span class="hive-roof"></span>
+        <span class="hive-box hive-box-top"></span>
+        <span class="hive-box hive-box-bottom"></span>
+        <span class="hive-entrance"></span>
+        <span class="hive-stand hive-stand-left"></span>
+        <span class="hive-stand hive-stand-right"></span>
+      </div>
+      <span class="beekeeper-avatar"></span>
+      <span class="bee-dot bee-dot-one"></span>
+      <span class="bee-dot bee-dot-two"></span>
+      <span class="bee-dot bee-dot-three"></span>
+      <span class="ant-dot ant-dot-one"></span>
+      <span class="ant-dot ant-dot-two"></span>
+      <span class="ant-dot ant-dot-three"></span>
+    </div>
+    <div class="walkthrough-status">
+      <p class="walkthrough-mode">Guided field walkthrough</p>
+      <p class="walkthrough-step" data-walkthrough-step>{{ walkthrough_steps[0] }}</p>
+      <p class="walkthrough-note">Manual observations or sample edge-signal inputs</p>
+      <ol class="walkthrough-step-list">
+        {% for step in walkthrough_steps %}
+        <li data-walkthrough-step-item>{{ step }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </section>
+
   <script>
     document.querySelectorAll("[data-local-advisor-form]").forEach((form) => {
       form.addEventListener("submit", () => {
         const button = form.querySelector("button[type='submit']");
         const loading = form.querySelector("[data-local-runtime-loading]");
+        const questionPanel = form.closest(".advisor-question-panel");
+        const panel = questionPanel ? questionPanel.querySelector("[data-hive-walkthrough]") : null;
+        const stepLabel = panel ? panel.querySelector("[data-walkthrough-step]") : null;
+        const stepItems = panel ? Array.from(panel.querySelectorAll("[data-walkthrough-step-item]")) : [];
         if (button) {
           button.disabled = true;
           button.textContent = "Working locally...";
         }
         if (loading) {
           loading.hidden = false;
+        }
+        if (panel) {
+          panel.hidden = false;
+          panel.classList.add("is-running");
+        }
+        if (stepLabel && stepItems.length) {
+          let activeIndex = 0;
+          stepItems[activeIndex].classList.add("is-active");
+          window.setInterval(() => {
+            stepItems[activeIndex].classList.remove("is-active");
+            activeIndex = (activeIndex + 1) % stepItems.length;
+            stepItems[activeIndex].classList.add("is-active");
+            stepLabel.textContent = stepItems[activeIndex].textContent;
+          }, 2600);
         }
       });
     });

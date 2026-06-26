@@ -498,6 +498,51 @@ HIVE_SIGNAL = {
     "error": LOCAL_RUNTIME_ERROR,
 }
 
+ADVISOR_WALKTHROUGH_STEPS = {
+    "hive-health": [
+        "Walking to hive",
+        "Checking entrance activity",
+        "Looking for ant trails near the stand",
+        "Inspecting brood pattern",
+        "Confirming normal smell report",
+        "Checking food stores",
+        "Preparing local guidance",
+    ],
+    "site-readiness": [
+        "Reviewing proposed apiary area",
+        "Checking crop zones",
+        "Checking water reliability",
+        "Checking shade and wind exposure",
+        "Looking for pesticide risk",
+        "Checking human and livestock safety",
+        "Preparing placement guidance",
+    ],
+    "harvest-quality": [
+        "Reviewing harvest timing",
+        "Checking capped honey",
+        "Watching moisture risk",
+        "Checking smoke exposure",
+        "Reviewing filtering and storage",
+        "Preparing quality guidance",
+    ],
+    "forage-pollination": [
+        "Mapping forage sources",
+        "Checking flowering gaps",
+        "Reviewing crop pollination needs",
+        "Checking pesticide timing",
+        "Reviewing water and shade",
+        "Preparing forage guidance",
+    ],
+    "hive-signal": [
+        "Reviewing sample edge-signal inputs",
+        "Checking activity level",
+        "Checking temperature pattern",
+        "Checking humidity pattern",
+        "Looking for clustering outside",
+        "Preparing signal guidance",
+    ],
+}
+
 RUNTIME_OK = "Completed locally."
 
 
@@ -582,6 +627,7 @@ def _advisor_context(request: Request, advisor: dict) -> dict:
         "placeholder": advisor["placeholder"],
         "example_prompt": advisor["example"],
         "submitted_question": "",
+        "walkthrough_steps": ADVISOR_WALKTHROUGH_STEPS[advisor["slug"]],
         "controlled_headings": YO_CONTROLLED_HEADINGS if lang == "yo" else [],
         "controlled_guidance": YO_CONTROLLED_GUIDANCE,
         "glossary": YO_GLOSSARY if lang == "yo" else [],
