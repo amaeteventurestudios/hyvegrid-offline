@@ -1,0 +1,112 @@
+{
+  "task": "031A",
+  "format": "webp",
+  "visual_direction": "honey-brown-gold",
+  "assets": [
+    {
+      "filename": "hero-honeycomb-bg.webp",
+      "role": "hero background",
+      "dimensions": "1080x1920",
+      "description": "Vertical 9:16 dark amber honeycomb texture background.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "logo-honeycomb-mark.webp",
+      "role": "logo mark",
+      "dimensions": "512x512",
+      "description": "Honeycomb/cone-style logo mark placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "hero-bee.webp",
+      "role": "hero illustration",
+      "dimensions": "1024x640",
+      "description": "Bee and wing silhouette placeholder for the hero area.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "card-hive-health.webp",
+      "role": "main advisor card",
+      "dimensions": "512x512",
+      "description": "Bee, hive, and colony health symbol placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "card-site-readiness.webp",
+      "role": "main advisor card",
+      "dimensions": "512x512",
+      "description": "Location pin, apiary placement, and trees placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "card-harvest-quality.webp",
+      "role": "main advisor card",
+      "dimensions": "512x512",
+      "description": "Honey jar and capped-frame quality placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "card-forage-pollination.webp",
+      "role": "main advisor card",
+      "dimensions": "512x512",
+      "description": "Flower, bee, and pollen placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "card-hive-signal.webp",
+      "role": "main advisor card",
+      "dimensions": "512x512",
+      "description": "Signal wave and hive activity placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "card-offline-status.webp",
+      "role": "main advisor card",
+      "dimensions": "512x512",
+      "description": "Shield/check and local system readiness placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "guide-yoruba-template.webp",
+      "role": "guidance card",
+      "dimensions": "512x512",
+      "description": "Honeycomb plus language/template symbol placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "guide-ask-advisor.webp",
+      "role": "guidance card",
+      "dimensions": "512x512",
+      "description": "Chat bubble with bee/hive mark placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "guide-daily-checklist.webp",
+      "role": "guidance card",
+      "dimensions": "512x512",
+      "description": "Checklist and field notebook placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "guide-storage-handling.webp",
+      "role": "guidance card",
+      "dimensions": "512x512",
+      "description": "Honey jar and safe storage container placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "guide-pesticide-awareness.webp",
+      "role": "guidance card",
+      "dimensions": "512x512",
+      "description": "Shield, caution, and bee placeholder.",
+      "public_edition_safe": true
+    },
+    {
+      "filename": "guide-forage-calendar.webp",
+      "role": "guidance card",
+      "dimensions": "512x512",
+      "description": "Flower and calendar placeholder.",
+      "public_edition_safe": true
+    }
+  ]
+}
