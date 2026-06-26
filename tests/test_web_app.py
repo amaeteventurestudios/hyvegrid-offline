@@ -45,6 +45,47 @@ class WebAppTests(unittest.TestCase):
         ]:
             self.assertIn(name, resp.text, f"Missing module card: {name}")
 
+    def test_mission_control_visual_sections_and_assets(self):
+        resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)
+        for needle in [
+            "mission-control-page",
+            "/static/assets/hero-honeycomb-bg.webp",
+            "/static/assets/logo-honeycomb-mark.webp",
+            "/static/assets/hero-bee.webp",
+            "/static/assets/card-hive-health.webp",
+            "/static/assets/card-site-readiness.webp",
+            "/static/assets/card-harvest-quality.webp",
+            "/static/assets/card-forage-pollination.webp",
+            "/static/assets/card-hive-signal.webp",
+            "/static/assets/card-offline-status.webp",
+            "Guidance at Your Fingertips",
+            "At a Glance",
+            "HyveGrid Offline provides field triage",
+            "Model: Granite 3.3 2B",
+            "System Ready",
+        ]:
+            self.assertIn(needle, resp.text)
+
+    def test_mission_control_guidance_assets(self):
+        resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)
+        for needle in [
+            "/static/assets/guide-yoruba-template.webp",
+            "/static/assets/guide-ask-advisor.webp",
+            "/static/assets/guide-daily-checklist.webp",
+            "/static/assets/guide-storage-handling.webp",
+            "/static/assets/guide-pesticide-awareness.webp",
+            "/static/assets/guide-forage-calendar.webp",
+            "Yoruba Template",
+            "Ask the Hive Advisor",
+            "Daily Hive Checklist",
+            "Storage &amp; Handling",
+            "Pesticide Awareness",
+            "Forage Calendar",
+        ]:
+            self.assertIn(needle, resp.text)
+
     def test_language_dropdown_defaults_to_english_on_mission_control(self):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, 200)
@@ -69,6 +110,7 @@ class WebAppTests(unittest.TestCase):
             self.assertIn(needle, resp.text)
         self.assertIn('<option value="/" >Gẹ̀ẹ́sì</option>', resp.text)
         self.assertIn('<option value="/?lang=yo" selected>Yorùbá</option>', resp.text)
+        self.assertIn("mission-control-page", resp.text)
 
     def test_language_dropdown_uses_same_page_urls(self):
         resp = self.client.get("/advisor/hive-health?lang=yo")

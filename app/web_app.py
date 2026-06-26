@@ -268,6 +268,69 @@ ADVISORS = [
     },
 ]
 
+ADVISOR_ASSETS = {
+    "hive-health": "/static/assets/card-hive-health.webp",
+    "site-readiness": "/static/assets/card-site-readiness.webp",
+    "harvest-quality": "/static/assets/card-harvest-quality.webp",
+    "forage-pollination": "/static/assets/card-forage-pollination.webp",
+    "hive-signal": "/static/assets/card-hive-signal.webp",
+}
+
+MISSION_ASSETS = {
+    "hero_bg": "/static/assets/hero-honeycomb-bg.webp",
+    "logo_mark": "/static/assets/logo-honeycomb-mark.webp",
+    "hero_bee": "/static/assets/hero-bee.webp",
+    "offline_status": "/static/assets/card-offline-status.webp",
+}
+
+GUIDANCE_CARDS = [
+    {
+        "title": "Yoruba Template",
+        "body": "Controlled Yoruba labels and field guidance templates.",
+        "asset": "/static/assets/guide-yoruba-template.webp",
+        "href": "/?lang=yo",
+    },
+    {
+        "title": "Ask the Hive Advisor",
+        "body": "Start with a local advisor question and public field notes.",
+        "asset": "/static/assets/guide-ask-advisor.webp",
+        "href": "/advisor/hive-health",
+    },
+    {
+        "title": "Daily Hive Checklist",
+        "body": "Observe activity, brood, pests, stores, water, and shade.",
+        "asset": "/static/assets/guide-daily-checklist.webp",
+        "href": None,
+    },
+    {
+        "title": "Storage & Handling",
+        "body": "Keep harvest checks focused on clean, dry, food-safe handling.",
+        "asset": "/static/assets/guide-storage-handling.webp",
+        "href": "/advisor/harvest-quality",
+    },
+    {
+        "title": "Pesticide Awareness",
+        "body": "Coordinate with farms and avoid exposure during bee flight.",
+        "asset": "/static/assets/guide-pesticide-awareness.webp",
+        "href": "/advisor/forage-pollination",
+    },
+    {
+        "title": "Forage Calendar",
+        "body": "Track flowering gaps, crop seasons, and backup forage.",
+        "asset": "/static/assets/guide-forage-calendar.webp",
+        "href": "/advisor/forage-pollination",
+    },
+]
+
+AT_A_GLANCE = [
+    ("Offline local app", "Runs at localhost with no judged-runtime cloud dependency."),
+    ("llama.cpp runtime", "Local GGUF inference path for advisor answers."),
+    ("GGUF model", "Locked Granite 3.3 2B Instruct Q4_K_M candidate."),
+    ("SQLite FTS5 retrieval", "Public apiculture notes remain local."),
+    ("Yoruba mode", "Controlled labels, glossary, and English fallback."),
+    ("Public challenge edition", "No proprietary hardware, sensor IP, or private data."),
+]
+
 STATUS_FACTS = [
     ("Runtime", "llama.cpp"),
     ("Model format", "GGUF"),
@@ -467,7 +530,18 @@ def _localize_advisor(advisor: dict, lang: str) -> dict:
     localized = dict(advisor)
     localized["name"] = names.get(advisor["slug"], advisor["name"])
     localized["href"] = _url_with_lang(f"/advisor/{advisor['slug']}", lang)
+    localized["asset"] = ADVISOR_ASSETS.get(advisor["slug"])
     return localized
+
+
+def _localized_guidance_cards(lang: str) -> list[dict]:
+    cards = []
+    for card in GUIDANCE_CARDS:
+        localized = dict(card)
+        if card["href"]:
+            localized["href"] = _url_with_lang(card["href"], lang)
+        cards.append(localized)
+    return cards
 
 
 def _base_context(request: Request) -> dict:
@@ -679,6 +753,9 @@ async def mission_control(request: Request) -> HTMLResponse:
             text["public_challenge_edition"],
             text["field_guidance_only"],
         ],
+        "mission_assets": MISSION_ASSETS,
+        "guidance_cards": _localized_guidance_cards(lang),
+        "at_a_glance": AT_A_GLANCE,
         "glossary": YO_GLOSSARY if lang == "yo" else [],
     })
     return TEMPLATES.TemplateResponse(

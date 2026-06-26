@@ -1,35 +1,127 @@
 {% extends "base.html" %}
 {% block title %}HyveGrid Offline &middot; {{ text.mission_control }}{% endblock %}
+{% block body_class %}mission-control-page{% endblock %}
 {% block content %}
-<h1>HyveGrid Offline</h1>
-<p class="lede">{{ description }}</p>
-<p class="badge">ADTC 2026 public challenge edition. Runs locally at localhost. No cloud access required during judged runtime.</p>
-{% if is_yoruba %}
-<p class="review-note">{{ yo_review_note }}</p>
-{% endif %}
+{% set hero_bg = mission_assets.hero_bg if mission_assets is defined else "/static/assets/hero-honeycomb-bg.webp" %}
+{% set logo_mark = mission_assets.logo_mark if mission_assets is defined else "/static/assets/logo-honeycomb-mark.webp" %}
+{% set hero_bee = mission_assets.hero_bee if mission_assets is defined else "/static/assets/hero-bee.webp" %}
+{% set offline_status_asset = mission_assets.offline_status if mission_assets is defined else "/static/assets/card-offline-status.webp" %}
+{% set guide_items = guidance_cards if guidance_cards is defined else [
+  {"title": "Yoruba Template", "body": "Controlled Yoruba labels and field guidance templates.", "asset": "/static/assets/guide-yoruba-template.webp", "href": "/?lang=yo"},
+  {"title": "Ask the Hive Advisor", "body": "Start with a local advisor question and public field notes.", "asset": "/static/assets/guide-ask-advisor.webp", "href": "/advisor/hive-health"},
+  {"title": "Daily Hive Checklist", "body": "Observe activity, brood, pests, stores, water, and shade.", "asset": "/static/assets/guide-daily-checklist.webp", "href": none},
+  {"title": "Storage & Handling", "body": "Keep harvest checks focused on clean, dry, food-safe handling.", "asset": "/static/assets/guide-storage-handling.webp", "href": "/advisor/harvest-quality"},
+  {"title": "Pesticide Awareness", "body": "Coordinate with farms and avoid exposure during bee flight.", "asset": "/static/assets/guide-pesticide-awareness.webp", "href": "/advisor/forage-pollination"},
+  {"title": "Forage Calendar", "body": "Track flowering gaps, crop seasons, and backup forage.", "asset": "/static/assets/guide-forage-calendar.webp", "href": "/advisor/forage-pollination"}
+] %}
+{% set glance_items = at_a_glance if at_a_glance is defined else [
+  ("Offline local app", "Runs at localhost with no judged-runtime cloud dependency."),
+  ("llama.cpp runtime", "Local GGUF inference path for advisor answers."),
+  ("GGUF model", "Locked Granite 3.3 2B Instruct Q4_K_M candidate."),
+  ("SQLite FTS5 retrieval", "Public apiculture notes remain local."),
+  ("Yoruba mode", "Controlled labels, glossary, and English fallback."),
+  ("Public challenge edition", "No proprietary hardware, sensor IP, or private data.")
+] %}
 
-<section class="cards">
-  {% for a in advisors %}
-  <a class="card" href="{{ a.href }}">
-    <h2>{{ a.name }}</h2>
-    <p>{{ a.blurb }}</p>
-    <span class="tag">{{ text.planned_for_demo }}</span>
-  </a>
-  {% endfor %}
-  <a class="card card-status" href="{{ status_card_url }}">
-    <h2>{{ status_card_title }}</h2>
-    <p>Runtime, model, retrieval, compliance, and benchmark evidence.</p>
-    <span class="tag tag-live">{{ text.available_now }}</span>
-  </a>
+<section class="mc-hero" style="--hero-bg: url('{{ hero_bg }}');">
+  <div class="mc-hero-copy">
+    <img class="mc-logo-mark" src="{{ logo_mark }}" alt="" width="96" height="96">
+    <p class="mc-kicker">{{ text.mission_control }}</p>
+    <h1>HyveGrid Offline</h1>
+    <p class="lede">{{ description }}</p>
+    <div class="mc-status-pills" aria-label="System readiness">
+      <span>{{ text.offline_mode }}</span>
+      <span>Model: Granite 3.3 2B</span>
+      <span>System Ready</span>
+    </div>
+  </div>
+  <div class="mc-hero-art">
+    <img src="{{ hero_bee }}" alt="" width="512" height="320">
+  </div>
 </section>
 
-{% if is_yoruba %}
-<section class="status-markers" aria-label="Yoruba status labels">
+<section class="mc-status-strip" aria-label="Offline system proof points">
   {% for marker in status_markers %}
   <span>{{ marker }}</span>
   {% endfor %}
 </section>
 
+<section class="mc-section">
+  <div class="mc-section-head">
+    <p class="mc-kicker">Field advisors</p>
+    <h2>{{ text.mission_control }}</h2>
+    <p>Choose a local advisor for field triage, harvest quality, forage, hive signals, or offline system readiness.</p>
+  </div>
+
+  <div class="mc-advisor-grid">
+    {% for a in advisors %}
+    <a class="mc-card" href="{{ a.href }}">
+      <img src="{{ a.asset | default('/static/assets/card-' ~ a.slug ~ '.webp') }}" alt="" width="160" height="160">
+      <h3>{{ a.name }}</h3>
+      <p>{{ a.blurb }}</p>
+      <span class="mc-card-action">{{ text.ask_locally }}</span>
+    </a>
+    {% endfor %}
+    <a class="mc-card mc-card-status" href="{{ status_card_url }}">
+      <img src="{{ offline_status_asset }}" alt="" width="160" height="160">
+      <h3>{{ status_card_title }}</h3>
+      <p>Runtime, model, retrieval, compliance, and benchmark evidence.</p>
+      <span class="mc-card-action">{{ text.available_now }}</span>
+    </a>
+  </div>
+</section>
+
+<section class="mc-safety-strip" aria-label="Safety reminder">
+  <strong>{{ text.field_guidance_only }}</strong>
+  <p>HyveGrid Offline provides field triage and next-step guidance. It is not a certified disease diagnosis tool. Confirm by physical inspection and consult an experienced beekeeper or extension officer when needed.</p>
+</section>
+
+<section class="mc-section">
+  <div class="mc-section-head">
+    <p class="mc-kicker">Guidance at Your Fingertips</p>
+    <h2>Guidance at Your Fingertips</h2>
+    <p>Compact field helpers for offline visits, Yoruba support, harvest handling, pesticide awareness, and forage planning.</p>
+  </div>
+
+  <div class="mc-guide-grid">
+    {% for card in guide_items %}
+      {% if card.href %}
+      <a class="mc-guide-card" href="{{ card.href }}">
+      {% else %}
+      <article class="mc-guide-card">
+      {% endif %}
+        <img src="{{ card.asset }}" alt="" width="96" height="96">
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.body }}</p>
+      {% if card.href %}
+      </a>
+      {% else %}
+      </article>
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<section class="mc-section mc-glance">
+  <div class="mc-section-head">
+    <p class="mc-kicker">At a Glance</p>
+    <h2>At a Glance</h2>
+  </div>
+  <div class="mc-glance-grid">
+    {% for title, body in glance_items %}
+    <article>
+      <h3>{{ title }}</h3>
+      <p>{{ body }}</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+{% if is_yoruba %}
+<p class="review-note">{{ yo_review_note }}</p>
+{% endif %}
+
+{% if is_yoruba %}
 <section class="glossary">
   <h2>{{ text.glossary }}</h2>
   {% for group in glossary %}

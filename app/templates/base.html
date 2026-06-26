@@ -6,7 +6,7 @@
   <title>{% block title %}HyveGrid Offline{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <header class="topbar">
     <div class="wrap topbar-inner">
       <a class="brand" href="{{ mission_control_url | default('/') }}">HyveGrid Offline</a>
