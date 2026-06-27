@@ -16,7 +16,11 @@ if str(_REPO_ROOT) not in sys.path:
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.web_app import app  # noqa: E402
+from app.web_app import (  # noqa: E402
+    app,
+    _advisor_runtime_paths,
+    _runtime_error_message,
+)
 
 
 class WebAppTests(unittest.TestCase):
@@ -178,6 +182,43 @@ class WebAppTests(unittest.TestCase):
         resp = self.client.get("/health")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["status"], "ok")
+
+    def test_advisor_runtime_paths_use_defaults_without_env(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            llama_bin, model_path = _advisor_runtime_paths()
+        self.assertEqual(llama_bin, "/home/amaete/llama.cpp/build/bin/llama-cli")
+        self.assertEqual(model_path, "model.gguf")
+
+    def test_advisor_runtime_paths_use_environment_overrides(self):
+        with mock.patch.dict(
+            "os.environ",
+            {
+                "LLAMA_BIN": "/tmp/local-llama.cpp/build/bin/llama-cli",
+                "HYVEGRID_MODEL_PATH": "model/custom-preview.gguf",
+            },
+            clear=True,
+        ):
+            llama_bin, model_path = _advisor_runtime_paths()
+        self.assertEqual(llama_bin, "/tmp/local-llama.cpp/build/bin/llama-cli")
+        self.assertEqual(model_path, "model/custom-preview.gguf")
+
+    def test_runtime_path_errors_include_preview_hints(self):
+        llama_message = _runtime_error_message(
+            RuntimeError(
+                "llama.cpp binary not found at '/missing/llama-cli'. "
+                "Build llama.cpp and check the path."
+            )
+        )
+        self.assertIn("Set LLAMA_BIN to a local llama-cli path", llama_message)
+
+        model_message = _runtime_error_message(
+            RuntimeError(
+                "Model file not found at '/missing/model.gguf'. "
+                "Download or link the GGUF model and check the path."
+            )
+        )
+        self.assertIn("GGUF model not found", model_message)
+        self.assertIn("Set HYVEGRID_MODEL_PATH", model_message)
 
     # --- Hive Health Advisor (wired to the offline answer path) -------------
 
@@ -343,9 +384,34 @@ class WebAppTests(unittest.TestCase):
                 "/advisor/hive-health", data={"question": self.HIVE_QUESTION}
             )
         self.assertEqual(resp.status_code, 200)
-        m.assert_called_once_with(self.HIVE_QUESTION)
+        m.assert_called_once_with(
+            self.HIVE_QUESTION,
+            model_path="model.gguf",
+            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+        )
         self.assertIn("example field answer", resp.text)
         self.assertIn("Completed locally", resp.text)
+
+    def test_hive_health_post_uses_runtime_path_environment_overrides(self):
+        with mock.patch.dict(
+            "os.environ",
+            {
+                "LLAMA_BIN": "/tmp/local-llama.cpp/build/bin/llama-cli",
+                "HYVEGRID_MODEL_PATH": "model/custom-preview.gguf",
+            },
+            clear=True,
+        ), mock.patch(
+            "app.web_app.answer_question", return_value=self._fake_bundle()
+        ) as m:
+            resp = self.client.post(
+                "/advisor/hive-health", data={"question": self.HIVE_QUESTION}
+            )
+        self.assertEqual(resp.status_code, 200)
+        m.assert_called_once_with(
+            self.HIVE_QUESTION,
+            model_path="model/custom-preview.gguf",
+            llama_bin="/tmp/local-llama.cpp/build/bin/llama-cli",
+        )
 
     def test_hive_health_yoruba_mode_uses_controlled_template(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:
@@ -353,7 +419,11 @@ class WebAppTests(unittest.TestCase):
                 "/advisor/hive-health?lang=yo", data={"question": self.HIVE_QUESTION}
             )
         self.assertEqual(resp.status_code, 200)
-        m.assert_called_once_with(self.HIVE_QUESTION)
+        m.assert_called_once_with(
+            self.HIVE_QUESTION,
+            model_path="model.gguf",
+            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+        )
         for needle in [
             "Àwọn template ìtọ́nisọ́nà Yorùbá",
             "Àkótán ohun tí a rí ní pápá",
@@ -462,7 +532,11 @@ class WebAppTests(unittest.TestCase):
         with mock.patch("app.web_app.answer_question", return_value=bundle) as m:
             resp = self.client.post(f"/advisor/{slug}", data={"question": question})
         self.assertEqual(resp.status_code, 200)
-        m.assert_called_once_with(question)
+        m.assert_called_once_with(
+            question,
+            model_path="model.gguf",
+            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+        )
         self.assertIn(marker, resp.text)
         self.assertIn("Completed locally", resp.text)
         self.assertIn(source_file, resp.text)
@@ -544,7 +618,11 @@ class WebAppTests(unittest.TestCase):
                 "/advisor/site-readiness", data={"question": self.SITE_QUESTION}
             )
         self.assertEqual(resp.status_code, 200)
-        m.assert_called_once_with(self.SITE_QUESTION)
+        m.assert_called_once_with(
+            self.SITE_QUESTION,
+            model_path="model.gguf",
+            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+        )
         self.assertIn("example site answer", resp.text)
         self.assertIn("Completed locally", resp.text)
 

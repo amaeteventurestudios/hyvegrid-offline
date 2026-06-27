@@ -27,6 +27,7 @@ Then open http://127.0.0.1:8000
 
 import asyncio
 import logging
+import os
 import urllib.parse
 from pathlib import Path
 
@@ -39,12 +40,20 @@ from fastapi.templating import Jinja2Templates
 # The existing offline answer path: retrieval + prompt builder + llama.cpp run
 # + output cleanup. Imported here so the Hive Health Advisor can call it without
 # duplicating that logic. Tests monkeypatch this name.
-from app.llama_runtime import answer_question, log_runtime_diagnostics
+from app.llama_runtime import (
+    DEFAULT_LLAMA_BIN,
+    DEFAULT_MODEL_PATH,
+    answer_question,
+    log_runtime_diagnostics,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 STATIC_DIR = BASE_DIR / "static"
 LOGGER = logging.getLogger(__name__)
+
+LLAMA_BIN_ENV = "LLAMA_BIN"
+MODEL_PATH_ENV = "HYVEGRID_MODEL_PATH"
 
 app = FastAPI(
     title="HyveGrid Offline",
@@ -371,6 +380,32 @@ LOCAL_RUNTIME_ERROR = (
     "the offline app, but the local model runtime failed. Check the server log "
     "for the exact model/runtime path issue."
 )
+
+
+def _advisor_runtime_paths() -> tuple[str, str]:
+    """Resolve preview/runtime paths from env while preserving Ubuntu defaults."""
+    llama_bin = os.environ.get(LLAMA_BIN_ENV, DEFAULT_LLAMA_BIN)
+    model_path = os.environ.get(MODEL_PATH_ENV, DEFAULT_MODEL_PATH)
+    return llama_bin, model_path
+
+
+def _runtime_error_message(exc: Exception) -> str:
+    """Add local-preview repair hints to runtime path errors for server logs."""
+    message = str(exc)
+    if message.startswith("llama.cpp binary not found at "):
+        return message.replace(
+            "Build llama.cpp and check the path.",
+            "Set LLAMA_BIN to a local llama-cli path or build llama.cpp and check the path.",
+        )
+    if message.startswith("Model file not found at "):
+        return message.replace(
+            "Model file not found",
+            "GGUF model not found",
+        ).replace(
+            "Download or link the GGUF model and check the path.",
+            "Set HYVEGRID_MODEL_PATH or run the model download/setup step.",
+        )
+    return message
 
 # Wired-advisor copy and messages. Each config holds the template fields the
 # shared form template and shared submit logic need.
@@ -722,15 +757,21 @@ async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLRespo
     # answer_question() is blocking (model load + generation) and can take
     # minutes; run it off the event loop so the server stays responsive.
     try:
-        log_runtime_diagnostics()
-        bundle = await asyncio.to_thread(answer_question, question)
+        llama_bin, model_path = _advisor_runtime_paths()
+        log_runtime_diagnostics(model_path=model_path, llama_bin=llama_bin)
+        bundle = await asyncio.to_thread(
+            answer_question,
+            question,
+            model_path=model_path,
+            llama_bin=llama_bin,
+        )
     except Exception as exc:
         # Do not expose stack traces or internal details to the user.
         LOGGER.error(
             "Local advisor generation failed for %s: %s: %s",
             advisor["slug"],
             type(exc).__name__,
-            exc,
+            _runtime_error_message(exc),
         )
         ctx["error_message"] = advisor["error"]
         return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)

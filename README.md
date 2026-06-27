@@ -29,6 +29,22 @@ Read `SCORING.md` before building.
 - Yoruba support for field usability and African use-case strength
 - Target hardware: low-cost Ubuntu laptop with 8 GB RAM
 
+## Mac preview runtime override
+
+The ADTC judged runtime still targets the Ubuntu laptop profile. For Mac
+preview only, build `llama.cpp` locally and start the app with explicit runtime
+paths:
+
+```bash
+LLAMA_BIN=/path/to/llama.cpp/build/bin/llama-cli \
+HYVEGRID_MODEL_PATH=model.gguf \
+/tmp/hyvegrid-task-033-test-venv/bin/python -m app.web_app
+```
+
+If `LLAMA_BIN` is not set, the app keeps the Ubuntu default
+`/home/amaete/llama.cpp/build/bin/llama-cli`. If `HYVEGRID_MODEL_PATH` is not
+set, the app keeps the default `model.gguf`.
+
 ## Planned modules
 
 1. Mission Control
