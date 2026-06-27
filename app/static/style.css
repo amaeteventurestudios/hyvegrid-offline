@@ -1002,41 +1002,47 @@ body {
 
 .beekeeper-avatar {
   position: absolute;
-  left: 13%;
-  bottom: 22%;
-  width: clamp(24px, 6.4vw, 38px);
-  height: clamp(42px, 10vw, 64px);
-  border-radius: 18px 18px 10px 10px;
-  background: linear-gradient(180deg, #fff2cc 0 30%, #c9862d 31% 100%);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.28);
-  animation: beekeeper-walk-board 6.4s ease-in-out infinite;
+  left: 11%;
+  bottom: 18%;
+  width: clamp(34px, 8.4vw, 58px);
+  aspect-ratio: 451 / 493;
+  transform: translate3d(0, 0, 0);
+  z-index: 2;
 }
 
-.beekeeper-avatar::before,
-.beekeeper-avatar::after {
-  content: "";
+.hive-walkthrough.is-running .beekeeper-avatar {
+  animation: keeper-route-board 9.6s ease-in-out infinite;
+}
+
+.keeper-marker,
+.keeper-shadow {
   position: absolute;
   display: block;
 }
 
-.beekeeper-avatar::before {
-  left: -12%;
-  top: -21%;
-  width: 124%;
-  height: 28%;
-  border-radius: 50%;
-  background: #fff6da;
-  border: 2px solid rgba(244, 183, 64, 0.42);
+.keeper-marker {
+  inset: 0;
+  background: url("/static/assets/walkthrough-keeper-marker.webp") center / contain no-repeat;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.34));
 }
 
-.beekeeper-avatar::after {
-  left: 44%;
-  bottom: -12%;
-  width: 5px;
-  height: 31%;
+.hive-walkthrough.is-running .keeper-marker {
+  animation: keeper-bob 1.8s ease-in-out infinite;
+}
+
+.keeper-shadow {
+  left: 24%;
+  right: 24%;
+  bottom: -5%;
+  height: 12%;
   border-radius: 999px;
-  background: #573211;
-  box-shadow: 12px 0 0 #573211;
+  background: rgba(18, 9, 5, 0.38);
+  filter: blur(4px);
+  transform: scaleX(1.2);
+}
+
+.hive-walkthrough.is-running .keeper-shadow {
+  animation: keeper-shadow 1.8s ease-in-out infinite;
 }
 
 .bee-dot,
@@ -1118,6 +1124,15 @@ body {
   font-size: 0.86rem;
 }
 
+.walkthrough-route {
+  margin: 4px 0 0;
+  color: #ffe8b3;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .walkthrough-scope {
   margin: 4px auto 0;
   color: #ffe8b3;
@@ -1127,6 +1142,7 @@ body {
   text-transform: uppercase;
 }
 
+.walkthrough-route-list,
 .walkthrough-step-list {
   display: flex;
   flex-wrap: wrap;
@@ -1137,6 +1153,7 @@ body {
   list-style: none;
 }
 
+.walkthrough-route-list li,
 .walkthrough-step-list li {
   min-height: 30px;
   display: inline-flex;
@@ -1148,6 +1165,20 @@ body {
   background: rgba(18, 9, 5, 0.58);
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.walkthrough-route-list {
+  margin-top: 12px;
+}
+
+.walkthrough-route-list li {
+  border-color: rgba(255, 232, 179, 0.18);
+  background: rgba(18, 9, 5, 0.42);
+}
+
+.walkthrough-route-list li.is-active {
+  border-color: rgba(244, 183, 64, 0.64);
+  color: #fff4d5;
 }
 
 .walkthrough-step-list li.is-active {
@@ -1202,15 +1233,27 @@ body {
   margin-top: 22px;
 }
 
-@keyframes beekeeper-walk-board {
+@keyframes keeper-route-board {
   0%,
-  100% {
-    transform: translateX(0) translateY(0);
-  }
-  48%,
-  58% {
-    transform: translate(31vw, -9vw);
-  }
+  100% { transform: translate3d(0, 0, 0); }
+  18% { transform: translate3d(16vw, -5vw, 0); }
+  28% { transform: translate3d(16vw, -5vw, 0); }
+  44% { transform: translate3d(28vw, -10vw, 0); }
+  54% { transform: translate3d(28vw, -10vw, 0); }
+  70% { transform: translate3d(36vw, -15vw, 0); }
+  80% { transform: translate3d(36vw, -15vw, 0); }
+}
+
+@keyframes keeper-bob {
+  0%,
+  100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes keeper-shadow {
+  0%,
+  100% { opacity: 0.7; transform: scaleX(1.2); }
+  50% { opacity: 0.46; transform: scaleX(0.95); }
 }
 
 @keyframes bee-loop-one {
@@ -1273,15 +1316,19 @@ body {
     aspect-ratio: 3 / 2;
   }
 
-  @keyframes beekeeper-walk-board {
+  .beekeeper-avatar {
+    width: clamp(28px, 10vw, 46px);
+  }
+
+  @keyframes keeper-route-board {
     0%,
-    100% {
-      transform: translateX(0) translateY(0);
-    }
-    48%,
-    58% {
-      transform: translate(42vw, -12vw);
-    }
+    100% { transform: translate3d(0, 0, 0); }
+    18% { transform: translate3d(16vw, -5vw, 0); }
+    28% { transform: translate3d(16vw, -5vw, 0); }
+    44% { transform: translate3d(32vw, -10vw, 0); }
+    54% { transform: translate3d(32vw, -10vw, 0); }
+    70% { transform: translate3d(44vw, -14vw, 0); }
+    80% { transform: translate3d(44vw, -14vw, 0); }
   }
 }
 

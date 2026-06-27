@@ -543,6 +543,47 @@ ADVISOR_WALKTHROUGH_STEPS = {
     ],
 }
 
+ADVISOR_ROUTE_POINTS = {
+    "hive-health": [
+        "Walking to hive",
+        "Checking entrance activity",
+        "Looking for ant trails near the stand",
+        "Reviewing brood and food check",
+        "Preparing local guidance",
+    ],
+    "site-readiness": [
+        "Walking the proposed apiary area",
+        "Checking water source",
+        "Checking crop zones",
+        "Checking shade and wind exposure",
+        "Reviewing pesticide risk",
+        "Preparing placement guidance",
+    ],
+    "harvest-quality": [
+        "Walking to hive area",
+        "Reviewing harvest timing",
+        "Checking capped honey marker",
+        "Moving toward storage/hut area",
+        "Reviewing filtering and storage",
+        "Preparing harvest guidance",
+    ],
+    "forage-pollination": [
+        "Walking from apiary to crop edge",
+        "Checking crop plots",
+        "Checking flowering/forage area",
+        "Checking water and shade",
+        "Preparing forage guidance",
+    ],
+    "hive-signal": [
+        "Walking to hive area",
+        "Checking activity marker",
+        "Checking temperature-style marker",
+        "Checking humidity-style marker",
+        "Reviewing clustering/activity note",
+        "Preparing signal guidance",
+    ],
+}
+
 RUNTIME_OK = "Completed locally."
 
 
@@ -628,6 +669,7 @@ def _advisor_context(request: Request, advisor: dict) -> dict:
         "example_prompt": advisor["example"],
         "submitted_question": "",
         "walkthrough_steps": ADVISOR_WALKTHROUGH_STEPS[advisor["slug"]],
+        "walkthrough_route_points": ADVISOR_ROUTE_POINTS[advisor["slug"]],
         "controlled_headings": YO_CONTROLLED_HEADINGS if lang == "yo" else [],
         "controlled_guidance": YO_CONTROLLED_GUIDANCE,
         "glossary": YO_GLOSSARY if lang == "yo" else [],

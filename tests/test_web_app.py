@@ -240,14 +240,18 @@ class WebAppTests(unittest.TestCase):
                 "data-hive-walkthrough",
                 "Hive State Walkthrough",
                 "/static/assets/walkthrough-apiary-board.webp",
+                "/static/assets/walkthrough-keeper-marker.webp",
                 "Local walkthrough while Granite thinks",
                 "Guided field walkthrough",
+                "Scripted inspection route",
                 "Visual inspection support while local guidance is prepared",
                 "Manual observations or sample edge-signal inputs",
                 "Not a simulation",
                 "beekeeper-avatar",
+                "keeper-marker",
                 "bee-dot",
                 "ant-dot",
+                "data-route-point",
                 "data-walkthrough-step",
                 "data-walkthrough-step-item",
                 "window.setInterval",
@@ -268,6 +272,7 @@ class WebAppTests(unittest.TestCase):
             "Confirming normal smell report",
             "Checking food stores",
             "Preparing local guidance",
+            "Reviewing brood and food check",
         ]:
             self.assertIn(needle, resp.text)
 
@@ -282,8 +287,42 @@ class WebAppTests(unittest.TestCase):
             "Looking for pesticide risk",
             "Checking human and livestock safety",
             "Preparing placement guidance",
+            "Walking the proposed apiary area",
+            "Reviewing pesticide risk",
         ]:
             self.assertIn(needle, resp.text)
+
+    def test_all_advisor_walkthrough_route_points_render(self):
+        expected = {
+            "harvest-quality": [
+                "Walking to hive area",
+                "Reviewing harvest timing",
+                "Checking capped honey marker",
+                "Moving toward storage/hut area",
+                "Reviewing filtering and storage",
+                "Preparing harvest guidance",
+            ],
+            "forage-pollination": [
+                "Walking from apiary to crop edge",
+                "Checking crop plots",
+                "Checking flowering/forage area",
+                "Checking water and shade",
+                "Preparing forage guidance",
+            ],
+            "hive-signal": [
+                "Walking to hive area",
+                "Checking activity marker",
+                "Checking temperature-style marker",
+                "Checking humidity-style marker",
+                "Reviewing clustering/activity note",
+                "Preparing signal guidance",
+            ],
+        }
+        for slug, route_points in expected.items():
+            resp = self.client.get(f"/advisor/{slug}")
+            self.assertEqual(resp.status_code, 200, slug)
+            for needle in route_points:
+                self.assertIn(needle, resp.text, f"{slug} missing {needle!r}")
 
     def test_advisor_language_dropdown_and_yoruba_route_still_render(self):
         resp = self.client.get("/advisor/hive-health")

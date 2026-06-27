@@ -53,3 +53,27 @@ Runtime notes:
 - The source background is intended to contain no people or animals.
 - Moving keeper, bee, ant, and checklist markers are separate HTML/CSS/vanilla JavaScript overlays.
 - The keeper marker is a scripted walkthrough marker, not an autonomous agent.
+
+## Task 033 Keeper Marker Overlay
+
+Source image:
+
+- `source/walkthrough-keeper-marker.png`
+
+Generated WebP:
+
+- `walkthrough-keeper-marker.webp`
+
+Conversion method:
+
+- Converted locally with Pillow in a temporary `/tmp` virtual environment.
+- Pillow was not added to `requirements.txt`.
+- Command shape: open the PNG, convert to RGBA, crop to the nontransparent marker content, save as WebP with quality 90 and method 6.
+- Transparency was preserved by using RGBA mode during conversion.
+
+Runtime notes:
+
+- The keeper marker is a local static asset served by the offline web app.
+- No CDN, hotlink, external image, or internet runtime dependency is used.
+- The keeper is a scripted visual overlay that follows a fixed inspection route.
+- The keeper is not autonomous and does not use model output, live sensor readings, or agent behavior.
