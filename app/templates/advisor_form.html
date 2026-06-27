@@ -35,19 +35,10 @@
     <div class="walkthrough-head">
       <p class="walkthrough-kicker">Local walkthrough while Granite thinks</p>
       <h2>Hive State Walkthrough</h2>
-      <p>Visual inspection support while the local model prepares guidance.</p>
+      <p>Visual inspection support while local guidance is prepared.</p>
     </div>
-    <div class="walkthrough-stage" aria-hidden="true">
-      <div class="walkthrough-sky"></div>
-      <div class="walkthrough-field"></div>
-      <div class="walkthrough-hive">
-        <span class="hive-roof"></span>
-        <span class="hive-box hive-box-top"></span>
-        <span class="hive-box hive-box-bottom"></span>
-        <span class="hive-entrance"></span>
-        <span class="hive-stand hive-stand-left"></span>
-        <span class="hive-stand hive-stand-right"></span>
-      </div>
+    <div class="walkthrough-stage" data-board-image="/static/assets/walkthrough-apiary-board.webp" aria-hidden="true">
+      <div class="walkthrough-board"></div>
       <span class="beekeeper-avatar"></span>
       <span class="bee-dot bee-dot-one"></span>
       <span class="bee-dot bee-dot-two"></span>
@@ -60,6 +51,7 @@
       <p class="walkthrough-mode">Guided field walkthrough</p>
       <p class="walkthrough-step" data-walkthrough-step>{{ walkthrough_steps[0] }}</p>
       <p class="walkthrough-note">Manual observations or sample edge-signal inputs</p>
+      <p class="walkthrough-scope">Not a simulation</p>
       <ol class="walkthrough-step-list">
         {% for step in walkthrough_steps %}
         <li data-walkthrough-step-item>{{ step }}</li>

@@ -29,3 +29,27 @@ Future tasks will wire these assets into Mission Control and advisor pages.
 - `guide-storage-handling.webp`
 - `guide-pesticide-awareness.webp`
 - `guide-forage-calendar.webp`
+
+## Task 032 Walkthrough Board
+
+Source image:
+
+- `source/walkthrough-apiary-board.png`
+
+Generated WebP:
+
+- `walkthrough-apiary-board.webp`
+
+Conversion method:
+
+- Converted locally with Pillow in a temporary `/tmp` virtual environment.
+- Pillow was not added to `requirements.txt`.
+- Command shape: open the PNG, convert to RGB, save as WebP with quality 82 and method 6.
+
+Runtime notes:
+
+- The board is a local static asset served by the offline web app.
+- No CDN, hotlink, external image, or internet runtime dependency is used.
+- The source background is intended to contain no people or animals.
+- Moving keeper, bee, ant, and checklist markers are separate HTML/CSS/vanilla JavaScript overlays.
+- The keeper marker is a scripted walkthrough marker, not an autonomous agent.

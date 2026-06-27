@@ -239,10 +239,12 @@ class WebAppTests(unittest.TestCase):
             for needle in [
                 "data-hive-walkthrough",
                 "Hive State Walkthrough",
+                "/static/assets/walkthrough-apiary-board.webp",
                 "Local walkthrough while Granite thinks",
                 "Guided field walkthrough",
-                "Visual inspection support while the local model prepares guidance",
+                "Visual inspection support while local guidance is prepared",
                 "Manual observations or sample edge-signal inputs",
+                "Not a simulation",
                 "beekeeper-avatar",
                 "bee-dot",
                 "ant-dot",

@@ -983,114 +983,33 @@ body {
 
 .walkthrough-stage {
   position: relative;
-  width: min(100%, 520px);
-  aspect-ratio: 16 / 9;
+  width: min(100%, 620px);
+  aspect-ratio: 3 / 2;
   margin: 4px auto 0;
   overflow: hidden;
   border-top: 1px solid rgba(244, 183, 64, 0.16);
   border-bottom: 1px solid rgba(244, 183, 64, 0.16);
-  background:
-    radial-gradient(circle at 22% 18%, rgba(244, 183, 64, 0.18), transparent 18%),
-    linear-gradient(180deg, #291407 0%, #3d210c 52%, #211006 53%, #130905 100%);
+  background: #211006;
 }
 
-.walkthrough-sky,
-.walkthrough-field {
+.walkthrough-board {
   position: absolute;
   inset: 0;
-}
-
-.walkthrough-sky {
   background:
-    linear-gradient(90deg, transparent 0 22%, rgba(255, 214, 102, 0.1) 22% 23%, transparent 23% 48%, rgba(255, 214, 102, 0.08) 48% 49%, transparent 49% 100%);
-  opacity: 0.72;
-}
-
-.walkthrough-field {
-  top: 53%;
-  background:
-    repeating-linear-gradient(100deg, rgba(244, 183, 64, 0.12) 0 2px, transparent 2px 28px),
-    linear-gradient(180deg, rgba(95, 57, 18, 0.72), rgba(31, 17, 7, 0.98));
-}
-
-.walkthrough-hive {
-  position: absolute;
-  right: 14%;
-  bottom: 23%;
-  width: 86px;
-  height: 94px;
-}
-
-.hive-roof,
-.hive-box,
-.hive-entrance,
-.hive-stand {
-  position: absolute;
-  display: block;
-}
-
-.hive-roof {
-  left: 5px;
-  top: 0;
-  width: 76px;
-  height: 18px;
-  border-radius: 4px 4px 2px 2px;
-  background: #8a4f16;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
-}
-
-.hive-box {
-  left: 12px;
-  width: 62px;
-  height: 24px;
-  border: 2px solid rgba(62, 32, 9, 0.78);
-  border-radius: 5px;
-  background: linear-gradient(180deg, #f4b740, #c9781d);
-}
-
-.hive-box-top {
-  top: 21px;
-}
-
-.hive-box-bottom {
-  top: 47px;
-}
-
-.hive-entrance {
-  left: 35px;
-  top: 59px;
-  width: 18px;
-  height: 7px;
-  border-radius: 999px;
-  background: #2b1608;
-}
-
-.hive-stand {
-  top: 73px;
-  width: 7px;
-  height: 22px;
-  border-radius: 3px;
-  background: #5d3410;
-}
-
-.hive-stand-left {
-  left: 20px;
-}
-
-.hive-stand-right {
-  right: 20px;
+    linear-gradient(180deg, rgba(22, 13, 7, 0.04), rgba(22, 13, 7, 0.16)),
+    url("/static/assets/walkthrough-apiary-board.webp") center / cover no-repeat;
 }
 
 .beekeeper-avatar {
   position: absolute;
-  left: 10%;
-  bottom: 24%;
-  width: 34px;
-  height: 58px;
+  left: 13%;
+  bottom: 22%;
+  width: clamp(24px, 6.4vw, 38px);
+  height: clamp(42px, 10vw, 64px);
   border-radius: 18px 18px 10px 10px;
   background: linear-gradient(180deg, #fff2cc 0 30%, #c9862d 31% 100%);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.24);
-  animation: beekeeper-walk 6.4s ease-in-out infinite;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.28);
+  animation: beekeeper-walk-board 6.4s ease-in-out infinite;
 }
 
 .beekeeper-avatar::before,
@@ -1101,20 +1020,20 @@ body {
 }
 
 .beekeeper-avatar::before {
-  left: -4px;
-  top: -12px;
-  width: 42px;
-  height: 16px;
+  left: -12%;
+  top: -21%;
+  width: 124%;
+  height: 28%;
   border-radius: 50%;
   background: #fff6da;
   border: 2px solid rgba(244, 183, 64, 0.42);
 }
 
 .beekeeper-avatar::after {
-  left: 15px;
-  bottom: -8px;
+  left: 44%;
+  bottom: -12%;
   width: 5px;
-  height: 18px;
+  height: 31%;
   border-radius: 999px;
   background: #573211;
   box-shadow: 12px 0 0 #573211;
@@ -1135,20 +1054,20 @@ body {
 }
 
 .bee-dot-one {
-  right: 21%;
-  top: 36%;
+  right: 30%;
+  top: 42%;
   animation: bee-loop-one 2.8s ease-in-out infinite;
 }
 
 .bee-dot-two {
-  right: 15%;
-  top: 46%;
+  right: 24%;
+  top: 51%;
   animation: bee-loop-two 3.3s ease-in-out infinite;
 }
 
 .bee-dot-three {
-  right: 27%;
-  top: 48%;
+  right: 36%;
+  top: 55%;
   animation: bee-loop-three 3.8s ease-in-out infinite;
 }
 
@@ -1160,20 +1079,20 @@ body {
 }
 
 .ant-dot-one {
-  right: 30%;
-  bottom: 17%;
+  right: 37%;
+  bottom: 25%;
   animation: ant-trail 3s linear infinite;
 }
 
 .ant-dot-two {
-  right: 36%;
-  bottom: 15%;
+  right: 42%;
+  bottom: 23%;
   animation: ant-trail 3s linear 0.7s infinite;
 }
 
 .ant-dot-three {
-  right: 42%;
-  bottom: 16%;
+  right: 47%;
+  bottom: 24%;
   animation: ant-trail 3s linear 1.4s infinite;
 }
 
@@ -1197,6 +1116,15 @@ body {
   margin: 4px auto 0;
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+.walkthrough-scope {
+  margin: 4px auto 0;
+  color: #ffe8b3;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .walkthrough-step-list {
@@ -1274,14 +1202,14 @@ body {
   margin-top: 22px;
 }
 
-@keyframes beekeeper-walk {
+@keyframes beekeeper-walk-board {
   0%,
   100% {
     transform: translateX(0) translateY(0);
   }
   48%,
   58% {
-    transform: translateX(175px) translateY(-2px);
+    transform: translate(31vw, -9vw);
   }
 }
 
@@ -1342,22 +1270,17 @@ body {
   }
 
   .walkthrough-stage {
-    aspect-ratio: 9 / 10;
+    aspect-ratio: 3 / 2;
   }
 
-  .walkthrough-hive {
-    right: 8%;
-    bottom: 23%;
-  }
-
-  @keyframes beekeeper-walk {
+  @keyframes beekeeper-walk-board {
     0%,
     100% {
       transform: translateX(0) translateY(0);
     }
     48%,
     58% {
-      transform: translateX(42vw) translateY(-2px);
+      transform: translate(42vw, -12vw);
     }
   }
 }
