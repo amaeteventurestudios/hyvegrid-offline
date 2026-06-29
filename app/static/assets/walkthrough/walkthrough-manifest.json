@@ -57,9 +57,60 @@
       "type": "keeper-inspect",
       "recommendedFrames": "2-4",
       "anchor": "bottom-center-foot-contact"
+    },
+    "bee_micro_sprite": {
+      "type": "micro-sprite",
+      "sourcePath": "app/static/assets/source/bee-micro-sprite.png",
+      "runtimePath": "app/static/assets/walkthrough/bee-micro-sprite.webp",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 6,
+      "sheetWidth": 192,
+      "sheetHeight": 32,
+      "intendedUse": "scripted hover near hive entrance"
+    },
+    "ant_micro_sprite": {
+      "type": "micro-sprite",
+      "sourcePath": "app/static/assets/source/ant-micro-sprite.png",
+      "runtimePath": "app/static/assets/walkthrough/ant-micro-sprite.webp",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 6,
+      "sheetWidth": 192,
+      "sheetHeight": 32,
+      "intendedUse": "scripted march near hive stand"
+    },
+    "keeper_inspect_sprite": {
+      "type": "keeper-inspect",
+      "sourcePath": "app/static/assets/source/keeper-inspect-sprite.png",
+      "runtimePath": "app/static/assets/walkthrough/keeper-inspect-sprite.webp",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frameCount": 4,
+      "sheetWidth": 384,
+      "sheetHeight": 96,
+      "intendedUse": "scripted inspection pause",
+      "anchor": "bottom-center-foot-contact"
+    },
+    "keeper_walk_sprite": {
+      "type": "keeper-walk",
+      "sourcePath": "app/static/assets/source/keeper-walk-sprite.png",
+      "runtimePath": "app/static/assets/walkthrough/keeper-walk-sprite.webp",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frameCount": 8,
+      "sheetWidth": 768,
+      "sheetHeight": 96,
+      "intendedUse": "scripted route walking loop",
+      "anchor": "bottom-center-foot-contact"
     }
   },
-  "directions": ["se", "sw", "ne", "nw"],
+  "directions": [
+    "se",
+    "sw",
+    "ne",
+    "nw"
+  ],
   "fallbackKeeperAsset": "app/static/assets/walkthrough-keeper-marker.webp",
   "fallbackBehavior": "use the existing static keeper marker if walking sprite assets are missing"
 }
