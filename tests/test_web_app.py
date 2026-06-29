@@ -279,17 +279,16 @@ class WebAppTests(unittest.TestCase):
             self.assertEqual(resp.status_code, 200, slug)
             for needle in [
                 "data-hive-walkthrough",
-                "Hive State Walkthrough",
+                "walkthrough-camera",
+                "guided field walkthrough",
                 "/static/assets/walkthrough-apiary-board.webp",
                 "/static/assets/walkthrough-keeper-marker.webp",
-                "Local walkthrough while Granite thinks",
-                "Guided field walkthrough",
-                "Scripted inspection route",
-                "Visual inspection support while local guidance is prepared",
-                "Manual observations or sample edge-signal inputs",
-                "Not a simulation",
+                "scripted inspection route",
+                "Visual support while local guidance is prepared",
+                "manual observations or sample edge-signal inputs",
                 "beekeeper-avatar",
                 "keeper-marker",
+                "keeper-shadow",
                 "bee-dot",
                 "ant-dot",
                 "data-route-point",
@@ -374,9 +373,24 @@ class WebAppTests(unittest.TestCase):
         resp = self.client.get("/advisor/hive-health?lang=yo")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Olùrànlọ́wọ́ Ìlera Ilé Oyin", resp.text)
-        self.assertIn("Hive State Walkthrough", resp.text)
+        self.assertIn("guided field walkthrough", resp.text)
         self.assertIn("Walking to hive", resp.text)
         self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
+
+    def test_walkthrough_css_tunes_keeper_scale_grounding_and_camera(self):
+        css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
+        for needle in [
+            "--keeper-size: clamp(22px, 4.8vw, 34px)",
+            "--keeper-start-x: 50%",
+            "--keeper-start-y: 84%",
+            "transform-origin: 50% 100%",
+            ".keeper-shadow",
+            "@keyframes walkthrough-camera",
+            "@keyframes keeper-route-board",
+            ".hive-walkthrough.is-running .walkthrough-camera",
+            "scale(1.18)",
+        ]:
+            self.assertIn(needle, css)
 
     def test_hive_health_post_valid_calls_answer_and_displays(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:

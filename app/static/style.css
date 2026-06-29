@@ -982,6 +982,12 @@ body {
 }
 
 .walkthrough-stage {
+  --camera-duration: 12.8s;
+  --keeper-size: clamp(22px, 4.8vw, 34px);
+  --keeper-start-x: 50%;
+  --keeper-start-y: 84%;
+  --keeper-shadow-width: 58%;
+  --keeper-shadow-height: 8%;
   position: relative;
   width: min(100%, 620px);
   aspect-ratio: 3 / 2;
@@ -992,9 +998,21 @@ body {
   background: #211006;
 }
 
+.walkthrough-camera,
 .walkthrough-board {
   position: absolute;
   inset: 0;
+}
+
+.walkthrough-camera {
+  transform-origin: 50% 50%;
+}
+
+.hive-walkthrough.is-running .walkthrough-camera {
+  animation: walkthrough-camera var(--camera-duration) ease-in-out infinite;
+}
+
+.walkthrough-board {
   background:
     linear-gradient(180deg, rgba(22, 13, 7, 0.04), rgba(22, 13, 7, 0.16)),
     url("/static/assets/walkthrough-apiary-board.webp") center / cover no-repeat;
@@ -1002,16 +1020,17 @@ body {
 
 .beekeeper-avatar {
   position: absolute;
-  left: 11%;
-  bottom: 18%;
-  width: clamp(34px, 8.4vw, 58px);
+  left: var(--keeper-start-x);
+  top: var(--keeper-start-y);
+  width: var(--keeper-size);
   aspect-ratio: 451 / 493;
-  transform: translate3d(0, 0, 0);
+  transform: translate3d(-50%, -100%, 0);
+  transform-origin: 50% 100%;
   z-index: 2;
 }
 
 .hive-walkthrough.is-running .beekeeper-avatar {
-  animation: keeper-route-board 9.6s ease-in-out infinite;
+  animation: keeper-route-board var(--camera-duration) ease-in-out infinite;
 }
 
 .keeper-marker,
@@ -1023,26 +1042,28 @@ body {
 .keeper-marker {
   inset: 0;
   background: url("/static/assets/walkthrough-keeper-marker.webp") center / contain no-repeat;
-  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.34));
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.28));
+  z-index: 2;
 }
 
 .hive-walkthrough.is-running .keeper-marker {
-  animation: keeper-bob 1.8s ease-in-out infinite;
+  animation: keeper-bob 1.9s ease-in-out infinite;
 }
 
 .keeper-shadow {
-  left: 24%;
-  right: 24%;
-  bottom: -5%;
-  height: 12%;
+  left: calc((100% - var(--keeper-shadow-width)) / 2);
+  bottom: -1%;
+  width: var(--keeper-shadow-width);
+  height: var(--keeper-shadow-height);
   border-radius: 999px;
-  background: rgba(18, 9, 5, 0.38);
-  filter: blur(4px);
-  transform: scaleX(1.2);
+  background: rgba(18, 9, 5, 0.42);
+  filter: blur(3px);
+  transform: translateY(14%) scaleX(1);
+  z-index: 1;
 }
 
 .hive-walkthrough.is-running .keeper-shadow {
-  animation: keeper-shadow 1.8s ease-in-out infinite;
+  animation: keeper-shadow 1.9s ease-in-out infinite;
 }
 
 .bee-dot,
@@ -1060,20 +1081,20 @@ body {
 }
 
 .bee-dot-one {
-  right: 30%;
+  right: 39%;
   top: 42%;
   animation: bee-loop-one 2.8s ease-in-out infinite;
 }
 
 .bee-dot-two {
-  right: 24%;
-  top: 51%;
+  right: 34%;
+  top: 49%;
   animation: bee-loop-two 3.3s ease-in-out infinite;
 }
 
 .bee-dot-three {
-  right: 36%;
-  top: 55%;
+  right: 43%;
+  top: 52%;
   animation: bee-loop-three 3.8s ease-in-out infinite;
 }
 
@@ -1085,20 +1106,20 @@ body {
 }
 
 .ant-dot-one {
-  right: 37%;
-  bottom: 25%;
+  right: 40%;
+  bottom: 42%;
   animation: ant-trail 3s linear infinite;
 }
 
 .ant-dot-two {
-  right: 42%;
-  bottom: 23%;
+  right: 44%;
+  bottom: 40%;
   animation: ant-trail 3s linear 0.7s infinite;
 }
 
 .ant-dot-three {
-  right: 47%;
-  bottom: 24%;
+  right: 48%;
+  bottom: 41%;
   animation: ant-trail 3s linear 1.4s infinite;
 }
 
@@ -1235,25 +1256,44 @@ body {
 
 @keyframes keeper-route-board {
   0%,
-  100% { transform: translate3d(0, 0, 0); }
-  18% { transform: translate3d(16vw, -5vw, 0); }
-  28% { transform: translate3d(16vw, -5vw, 0); }
-  44% { transform: translate3d(28vw, -10vw, 0); }
-  54% { transform: translate3d(28vw, -10vw, 0); }
-  70% { transform: translate3d(36vw, -15vw, 0); }
-  80% { transform: translate3d(36vw, -15vw, 0); }
+  100% { transform: translate3d(-50%, -100%, 0); }
+  18% { transform: translate3d(calc(-50% - 6vw), calc(-100% - 8vw), 0); }
+  30% { transform: translate3d(calc(-50% - 6vw), calc(-100% - 8vw), 0); }
+  46% { transform: translate3d(calc(-50% + 1vw), calc(-100% - 14vw), 0); }
+  58% { transform: translate3d(calc(-50% + 1vw), calc(-100% - 14vw), 0); }
+  74% { transform: translate3d(calc(-50% + 11vw), calc(-100% - 19vw), 0); }
+  86% { transform: translate3d(calc(-50% + 11vw), calc(-100% - 19vw), 0); }
 }
 
 @keyframes keeper-bob {
   0%,
   100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-2px); }
 }
 
 @keyframes keeper-shadow {
   0%,
-  100% { opacity: 0.7; transform: scaleX(1.2); }
-  50% { opacity: 0.46; transform: scaleX(0.95); }
+  100% { opacity: 0.72; transform: translateY(14%) scaleX(1); }
+  50% { opacity: 0.58; transform: translateY(14%) scaleX(0.9); }
+}
+
+@keyframes walkthrough-camera {
+  0%,
+  10% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25%,
+  36% {
+    transform: translate3d(2%, -2%, 0) scale(1.12);
+  }
+  52%,
+  64% {
+    transform: translate3d(-4%, -5%, 0) scale(1.18);
+  }
+  80%,
+  100% {
+    transform: translate3d(-2%, -4%, 0) scale(1.1);
+  }
 }
 
 @keyframes bee-loop-one {
@@ -1313,22 +1353,38 @@ body {
   }
 
   .walkthrough-stage {
+    --keeper-size: clamp(18px, 6.2vw, 28px);
     aspect-ratio: 3 / 2;
-  }
-
-  .beekeeper-avatar {
-    width: clamp(28px, 10vw, 46px);
   }
 
   @keyframes keeper-route-board {
     0%,
-    100% { transform: translate3d(0, 0, 0); }
-    18% { transform: translate3d(16vw, -5vw, 0); }
-    28% { transform: translate3d(16vw, -5vw, 0); }
-    44% { transform: translate3d(32vw, -10vw, 0); }
-    54% { transform: translate3d(32vw, -10vw, 0); }
-    70% { transform: translate3d(44vw, -14vw, 0); }
-    80% { transform: translate3d(44vw, -14vw, 0); }
+    100% { transform: translate3d(-50%, -100%, 0); }
+    18% { transform: translate3d(calc(-50% - 8vw), calc(-100% - 8vw), 0); }
+    30% { transform: translate3d(calc(-50% - 8vw), calc(-100% - 8vw), 0); }
+    46% { transform: translate3d(calc(-50% + 1vw), calc(-100% - 15vw), 0); }
+    58% { transform: translate3d(calc(-50% + 1vw), calc(-100% - 15vw), 0); }
+    74% { transform: translate3d(calc(-50% + 14vw), calc(-100% - 20vw), 0); }
+    86% { transform: translate3d(calc(-50% + 14vw), calc(-100% - 20vw), 0); }
+  }
+
+  @keyframes walkthrough-camera {
+    0%,
+    10% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    25%,
+    36% {
+      transform: translate3d(2%, -2%, 0) scale(1.08);
+    }
+    52%,
+    64% {
+      transform: translate3d(-4%, -4%, 0) scale(1.12);
+    }
+    80%,
+    100% {
+      transform: translate3d(-2%, -3%, 0) scale(1.07);
+    }
   }
 }
 
