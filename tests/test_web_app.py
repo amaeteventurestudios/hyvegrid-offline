@@ -267,7 +267,7 @@ class WebAppTests(unittest.TestCase):
         # No answer section on a plain GET.
         self.assertNotIn("Completed locally", resp.text)
 
-    def test_advisor_pages_include_walkthrough_container_and_script(self):
+    def test_advisor_pages_include_local_guidance_waiting_panel(self):
         for slug in [
             "hive-health",
             "site-readiness",
@@ -278,101 +278,80 @@ class WebAppTests(unittest.TestCase):
             resp = self.client.get(f"/advisor/{slug}")
             self.assertEqual(resp.status_code, 200, slug)
             for needle in [
-                "data-hive-walkthrough",
-                "walkthrough-camera",
-                "guided field walkthrough",
-                "/static/assets/walkthrough-apiary-board.webp",
-                "/static/assets/walkthrough-keeper-marker.webp",
-                "/static/assets/walkthrough/keeper-walk-sprite.webp",
-                "/static/assets/walkthrough/keeper-inspect-sprite.webp",
-                "/static/assets/walkthrough/bee-micro-sprite.webp",
-                "/static/assets/walkthrough/ant-micro-sprite.webp",
-                "scripted inspection route",
-                "Visual support while local guidance is prepared",
-                "manual observations or sample edge-signal inputs",
-                "beekeeper-avatar",
-                "walkthrough-sprite",
-                "walkthrough-sprite--keeper-walk",
-                "walkthrough-sprite--bee",
-                "walkthrough-sprite--ant",
-                "keeper-marker",
-                "keeper-sprite--walk",
-                "keeper-sprite--inspect",
-                "keeper-shadow",
-                "bee-dot",
-                "ant-dot",
-                "data-route-point",
-                "data-walkthrough-step",
-                "data-walkthrough-step-item",
-                "window.setInterval",
+                "data-local-guidance-panel",
+                "Preparing local guidance...",
+                "Working locally on your question. No cloud access.",
+                "Reading your field observation",
+                "Searching local apiculture notes",
+                "Running local GGUF model through llama.cpp",
+                "This may take a few minutes on a low-cost laptop.",
+                "Need visual support?",
+                "manual observations",
+                "sample edge-signal inputs",
+                "Open field resources",
+                "Local system status",
+                "Offline mode:",
+                "Local model:",
+                "Retrieval source:",
+                "Network required:",
+                "Hausa",
+                "Swahili",
+                "Preview",
                 "Working locally...",
                 "data-local-runtime-loading",
                 "data-submit-label",
             ]:
                 self.assertIn(needle, resp.text, f"{slug} missing {needle!r}")
+            for removed in [
+                "data-hive-walkthrough",
+                "walkthrough-camera",
+                "guided field " + "walkthrough",
+                "/static/assets/walkthrough/keeper-walk-sprite.webp",
+                "/static/assets/walkthrough/keeper-inspect-sprite.webp",
+                "/static/assets/walkthrough/bee-micro-sprite.webp",
+                "/static/assets/walkthrough/ant-micro-sprite.webp",
+                "scripted inspection " + "route",
+                "walkthrough-sprite",
+                "bee-dot",
+                "ant-dot",
+                "window.setInterval",
+            ]:
+                self.assertNotIn(removed, resp.text, f"{slug} still has {removed!r}")
 
-    def test_hive_health_walkthrough_steps_render(self):
+    def test_hive_health_local_guidance_waiting_panel_render(self):
         resp = self.client.get("/advisor/hive-health")
         self.assertEqual(resp.status_code, 200)
         for needle in [
-            "Walking to hive",
-            "Checking entrance activity",
-            "Looking for ant trails near the stand",
-            "Inspecting brood pattern",
-            "Confirming normal smell report",
-            "Checking food stores",
-            "Preparing local guidance",
-            "Reviewing brood and food check",
+            "Preparing a cautious hive health advisor response",
+            "Completed",
+            "In progress",
+            "Active",
+            "Configured",
+            "Local notes",
         ]:
             self.assertIn(needle, resp.text)
 
-    def test_site_readiness_walkthrough_steps_render(self):
+    def test_site_readiness_local_guidance_waiting_panel_render(self):
         resp = self.client.get("/advisor/site-readiness")
         self.assertEqual(resp.status_code, 200)
         for needle in [
-            "Reviewing proposed apiary area",
-            "Checking crop zones",
-            "Checking water reliability",
-            "Checking shade and wind exposure",
-            "Looking for pesticide risk",
-            "Checking human and livestock safety",
-            "Preparing placement guidance",
-            "Walking the proposed apiary area",
-            "Reviewing pesticide risk",
+            "Preparing local guidance...",
+            "Preparing a cautious site readiness advisor response",
+            "local apiculture notes",
+            "local GGUF model",
         ]:
             self.assertIn(needle, resp.text)
 
-    def test_all_advisor_walkthrough_route_points_render(self):
+    def test_all_advisor_local_guidance_panels_render_contextual_response(self):
         expected = {
-            "harvest-quality": [
-                "Walking to hive area",
-                "Reviewing harvest timing",
-                "Checking capped honey marker",
-                "Moving toward storage/hut area",
-                "Reviewing filtering and storage",
-                "Preparing harvest guidance",
-            ],
-            "forage-pollination": [
-                "Walking from apiary to crop edge",
-                "Checking crop plots",
-                "Checking flowering/forage area",
-                "Checking water and shade",
-                "Preparing forage guidance",
-            ],
-            "hive-signal": [
-                "Walking to hive area",
-                "Checking activity marker",
-                "Checking temperature-style marker",
-                "Checking humidity-style marker",
-                "Reviewing clustering/activity note",
-                "Preparing signal guidance",
-            ],
+            "harvest-quality": "Preparing a cautious harvest quality coach response",
+            "forage-pollination": "Preparing a cautious forage and pollination guide response",
+            "hive-signal": "Preparing a cautious hive signal check response",
         }
-        for slug, route_points in expected.items():
+        for slug, response_label in expected.items():
             resp = self.client.get(f"/advisor/{slug}")
             self.assertEqual(resp.status_code, 200, slug)
-            for needle in route_points:
-                self.assertIn(needle, resp.text, f"{slug} missing {needle!r}")
+            self.assertIn(response_label, resp.text)
 
     def test_advisor_language_dropdown_and_yoruba_route_still_render(self):
         resp = self.client.get("/advisor/hive-health")
@@ -383,46 +362,35 @@ class WebAppTests(unittest.TestCase):
         resp = self.client.get("/advisor/hive-health?lang=yo")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Olùrànlọ́wọ́ Ìlera Ilé Oyin", resp.text)
-        self.assertIn("guided field walkthrough", resp.text)
-        self.assertIn("Walking to hive", resp.text)
+        self.assertIn("Preparing local guidance...", resp.text)
+        self.assertIn("Yorùbá", resp.text)
         self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
 
-    def test_walkthrough_css_tunes_keeper_scale_grounding_and_camera(self):
+    def test_local_guidance_css_renders_waiting_state(self):
         css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
         for needle in [
-            "--keeper-size: clamp(42px, 7vw, 56px)",
-            "--keeper-start-x: 50%",
-            "--keeper-start-y: 84%",
-            "transform-origin: 50% 100%",
-            ".keeper-shadow",
-            "@keyframes walkthrough-camera",
-            "@keyframes keeper-route-board",
-            ".hive-walkthrough.is-running .walkthrough-camera",
-            "scale(1.18)",
-        ]:
-            self.assertIn(needle, css)
-
-    def test_walkthrough_css_integrates_sprite_sheets(self):
-        css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
-        for needle in [
-            ".walkthrough-sprite--bee",
-            ".walkthrough-sprite--ant",
-            ".walkthrough-sprite--keeper-walk",
-            "url(\"/static/assets/walkthrough/keeper-walk-sprite.webp\")",
-            "url(\"/static/assets/walkthrough/keeper-inspect-sprite.webp\")",
-            "url(\"/static/assets/walkthrough/bee-micro-sprite.webp\")",
-            "url(\"/static/assets/walkthrough/ant-micro-sprite.webp\")",
-            "--ant-size: clamp(12px, 2.3vw, 18px)",
-            "steps(8)",
-            "steps(6)",
-            "steps(4)",
-            "@keyframes keeper-walk-frames",
-            "@keyframes keeper-inspect-frames",
-            "@keyframes bee-sprite-frames",
-            "@keyframes ant-sprite-frames",
+            ".local-guidance-panel",
+            ".local-guidance-spinner",
+            ".local-guidance-steps",
+            ".local-guidance-grid",
+            ".local-guidance-languages",
+            "@keyframes local-guidance-spin",
             "@media (prefers-reduced-motion: reduce)",
         ]:
             self.assertIn(needle, css)
+        for removed in [
+            "walkthrough-apiary-board.webp",
+            "walkthrough-keeper-marker.webp",
+            "keeper-walk-sprite.webp",
+            "keeper-inspect-sprite.webp",
+            "bee-micro-sprite.webp",
+            "ant-micro-sprite.webp",
+            "walkthrough-camera",
+            "keeper-route-board",
+            "bee-sprite-frames",
+            "ant-sprite-frames",
+        ]:
+            self.assertNotIn(removed, css)
 
     def test_hive_health_post_valid_calls_answer_and_displays(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:

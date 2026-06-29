@@ -31,44 +31,61 @@
     </p>
   </form>
 
-  <section class="hive-walkthrough" data-hive-walkthrough hidden aria-live="polite">
-    <div class="walkthrough-head">
-      <p class="walkthrough-kicker">scripted inspection route</p>
-      <h2>guided field walkthrough</h2>
-      <p>Visual support while local guidance is prepared.</p>
-    </div>
-    <div class="walkthrough-stage" data-board-image="/static/assets/walkthrough-apiary-board.webp" data-keeper-image="/static/assets/walkthrough-keeper-marker.webp" data-keeper-walk-sprite="/static/assets/walkthrough/keeper-walk-sprite.webp" data-keeper-inspect-sprite="/static/assets/walkthrough/keeper-inspect-sprite.webp" data-bee-sprite="/static/assets/walkthrough/bee-micro-sprite.webp" data-ant-sprite="/static/assets/walkthrough/ant-micro-sprite.webp" aria-hidden="true">
-      <div class="walkthrough-camera">
-        <div class="walkthrough-board"></div>
-        <span class="beekeeper-avatar walkthrough-sprite walkthrough-sprite--keeper-walk">
-          <span class="keeper-shadow"></span>
-          <span class="keeper-marker"></span>
-          <span class="keeper-sprite keeper-sprite--walk"></span>
-          <span class="keeper-sprite keeper-sprite--inspect"></span>
-        </span>
-        <span class="bee-dot bee-dot-one walkthrough-sprite walkthrough-sprite--bee"></span>
-        <span class="bee-dot bee-dot-two walkthrough-sprite walkthrough-sprite--bee"></span>
-        <span class="bee-dot bee-dot-three walkthrough-sprite walkthrough-sprite--bee"></span>
-        <span class="ant-dot ant-dot-one walkthrough-sprite walkthrough-sprite--ant"></span>
-        <span class="ant-dot ant-dot-two walkthrough-sprite walkthrough-sprite--ant"></span>
-        <span class="ant-dot ant-dot-three walkthrough-sprite walkthrough-sprite--ant"></span>
+  <section class="local-guidance-panel" data-local-guidance-panel hidden aria-live="polite">
+    <div class="local-guidance-head">
+      <span class="local-guidance-spinner" aria-hidden="true"></span>
+      <div>
+        <h2>Preparing local guidance...</h2>
+        <p>Working locally on your question. No cloud access.</p>
       </div>
     </div>
-    <div class="walkthrough-status">
-      <p class="walkthrough-mode">guided field walkthrough</p>
-      <p class="walkthrough-route">scripted inspection route</p>
-      <p class="walkthrough-step" data-walkthrough-step>{{ walkthrough_steps[0] }}</p>
-      <p class="walkthrough-note">manual observations or sample edge-signal inputs</p>
-      <ol class="walkthrough-route-list">
-        {% for point in walkthrough_route_points %}
-        <li data-route-point>{{ point }}</li>
-        {% endfor %}
-      </ol>
-      <ol class="walkthrough-step-list">
-        {% for step in walkthrough_steps %}
-        <li data-walkthrough-step-item>{{ step }}</li>
-        {% endfor %}
-      </ol>
+    <ol class="local-guidance-steps">
+      <li>
+        <span class="local-guidance-step-index is-complete" aria-hidden="true">✓</span>
+        <span>Reading your field observation</span>
+        <strong>Completed</strong>
+      </li>
+      <li>
+        <span class="local-guidance-step-index is-complete" aria-hidden="true">✓</span>
+        <span>Searching local apiculture notes</span>
+        <strong>Completed</strong>
+      </li>
+      <li>
+        <span class="local-guidance-step-index is-current" aria-hidden="true"></span>
+        <span>Preparing a cautious {{ title | lower }} response</span>
+        <strong>In progress</strong>
+      </li>
+      <li>
+        <span class="local-guidance-step-index" aria-hidden="true"></span>
+        <span>Running local GGUF model through llama.cpp</span>
+        <strong>Active</strong>
+      </li>
+    </ol>
+    <p class="local-guidance-note">This may take a few minutes on a low-cost laptop.</p>
+    <div class="local-guidance-grid">
+      <section class="local-guidance-card">
+        <h3>Need visual support?</h3>
+        <p>You can review manual observations or provide sample edge-signal inputs while local guidance is prepared.</p>
+        <button type="button">Open field resources</button>
+      </section>
+      <section class="local-guidance-card">
+        <h3>Local system status</h3>
+        <dl class="local-guidance-status-list">
+          <div><dt>Offline mode:</dt><dd>On</dd></div>
+          <div><dt>Local model:</dt><dd>Configured</dd></div>
+          <div><dt>Retrieval source:</dt><dd>Local notes</dd></div>
+          <div><dt>Network required:</dt><dd>No</dd></div>
+        </dl>
+      </section>
+    </div>
+    <div class="local-guidance-languages" aria-label="Change guidance language output">
+      <p>Change guidance language (output)</p>
+      <div>
+        <button type="button" class="is-active">English</button>
+        <button type="button">Yorùbá</button>
+        <button type="button">Hausa <span>Preview</span></button>
+        <button type="button">Swahili <span>Preview</span></button>
+      </div>
     </div>
   </section>
 
@@ -78,10 +95,7 @@
         const button = form.querySelector("button[type='submit']");
         const loading = form.querySelector("[data-local-runtime-loading]");
         const questionPanel = form.closest(".advisor-question-panel");
-        const panel = questionPanel ? questionPanel.querySelector("[data-hive-walkthrough]") : null;
-        const stepLabel = panel ? panel.querySelector("[data-walkthrough-step]") : null;
-        const stepItems = panel ? Array.from(panel.querySelectorAll("[data-walkthrough-step-item]")) : [];
-        const routePoints = panel ? Array.from(panel.querySelectorAll("[data-route-point]")) : [];
+        const panel = questionPanel ? questionPanel.querySelector("[data-local-guidance-panel]") : null;
         if (button) {
           button.disabled = true;
           button.textContent = "Working locally...";
@@ -91,20 +105,6 @@
         }
         if (panel) {
           panel.hidden = false;
-          panel.classList.add("is-running");
-        }
-        if (routePoints.length) {
-          routePoints[0].classList.add("is-active");
-        }
-        if (stepLabel && stepItems.length) {
-          let activeIndex = 0;
-          stepItems[activeIndex].classList.add("is-active");
-          window.setInterval(() => {
-            stepItems[activeIndex].classList.remove("is-active");
-            activeIndex = (activeIndex + 1) % stepItems.length;
-            stepItems[activeIndex].classList.add("is-active");
-            stepLabel.textContent = stepItems[activeIndex].textContent;
-          }, 2600);
         }
       });
     });
