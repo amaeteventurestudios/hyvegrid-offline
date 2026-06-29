@@ -989,7 +989,7 @@ body {
   --keeper-shadow-width: 64%;
   --keeper-shadow-height: 7%;
   --bee-size: clamp(12px, 2.4vw, 18px);
-  --ant-size: clamp(10px, 2vw, 15px);
+  --ant-size: clamp(12px, 2.3vw, 18px);
   position: relative;
   width: min(100%, 620px);
   aspect-ratio: 3 / 2;
@@ -1150,7 +1150,9 @@ body {
   width: var(--ant-size);
   height: var(--ant-size);
   background-image: url("/static/assets/walkthrough/ant-micro-sprite.webp");
-  filter: drop-shadow(0 1px 1px rgba(255, 232, 179, 0.1));
+  filter:
+    drop-shadow(0 1px 1px rgba(18, 9, 5, 0.32))
+    drop-shadow(0 0 2px rgba(255, 232, 179, 0.24));
 }
 
 .ant-dot-one {
@@ -1418,10 +1420,10 @@ body {
 }
 
 @keyframes ant-trail {
-  0% { transform: translateX(-18px); opacity: 0.18; }
+  0% { transform: translateX(-10px); opacity: 0.38; }
   30%,
   80% { opacity: 1; }
-  100% { transform: translateX(34px); opacity: 0.18; }
+  100% { transform: translateX(24px); opacity: 0.38; }
 }
 
 @keyframes ant-sprite-frames {

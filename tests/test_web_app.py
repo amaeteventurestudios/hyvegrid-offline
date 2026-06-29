@@ -412,6 +412,7 @@ class WebAppTests(unittest.TestCase):
             "url(\"/static/assets/walkthrough/keeper-inspect-sprite.webp\")",
             "url(\"/static/assets/walkthrough/bee-micro-sprite.webp\")",
             "url(\"/static/assets/walkthrough/ant-micro-sprite.webp\")",
+            "--ant-size: clamp(12px, 2.3vw, 18px)",
             "steps(8)",
             "steps(6)",
             "steps(4)",
