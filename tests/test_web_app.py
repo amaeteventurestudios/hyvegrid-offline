@@ -283,11 +283,21 @@ class WebAppTests(unittest.TestCase):
                 "guided field walkthrough",
                 "/static/assets/walkthrough-apiary-board.webp",
                 "/static/assets/walkthrough-keeper-marker.webp",
+                "/static/assets/walkthrough/keeper-walk-sprite.webp",
+                "/static/assets/walkthrough/keeper-inspect-sprite.webp",
+                "/static/assets/walkthrough/bee-micro-sprite.webp",
+                "/static/assets/walkthrough/ant-micro-sprite.webp",
                 "scripted inspection route",
                 "Visual support while local guidance is prepared",
                 "manual observations or sample edge-signal inputs",
                 "beekeeper-avatar",
+                "walkthrough-sprite",
+                "walkthrough-sprite--keeper-walk",
+                "walkthrough-sprite--bee",
+                "walkthrough-sprite--ant",
                 "keeper-marker",
+                "keeper-sprite--walk",
+                "keeper-sprite--inspect",
                 "keeper-shadow",
                 "bee-dot",
                 "ant-dot",
@@ -380,7 +390,7 @@ class WebAppTests(unittest.TestCase):
     def test_walkthrough_css_tunes_keeper_scale_grounding_and_camera(self):
         css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
         for needle in [
-            "--keeper-size: clamp(22px, 4.8vw, 34px)",
+            "--keeper-size: clamp(42px, 7vw, 56px)",
             "--keeper-start-x: 50%",
             "--keeper-start-y: 84%",
             "transform-origin: 50% 100%",
@@ -389,6 +399,27 @@ class WebAppTests(unittest.TestCase):
             "@keyframes keeper-route-board",
             ".hive-walkthrough.is-running .walkthrough-camera",
             "scale(1.18)",
+        ]:
+            self.assertIn(needle, css)
+
+    def test_walkthrough_css_integrates_sprite_sheets(self):
+        css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
+        for needle in [
+            ".walkthrough-sprite--bee",
+            ".walkthrough-sprite--ant",
+            ".walkthrough-sprite--keeper-walk",
+            "url(\"/static/assets/walkthrough/keeper-walk-sprite.webp\")",
+            "url(\"/static/assets/walkthrough/keeper-inspect-sprite.webp\")",
+            "url(\"/static/assets/walkthrough/bee-micro-sprite.webp\")",
+            "url(\"/static/assets/walkthrough/ant-micro-sprite.webp\")",
+            "steps(8)",
+            "steps(6)",
+            "steps(4)",
+            "@keyframes keeper-walk-frames",
+            "@keyframes keeper-inspect-frames",
+            "@keyframes bee-sprite-frames",
+            "@keyframes ant-sprite-frames",
+            "@media (prefers-reduced-motion: reduce)",
         ]:
             self.assertIn(needle, css)
 

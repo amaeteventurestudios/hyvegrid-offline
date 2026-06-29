@@ -37,19 +37,21 @@
       <h2>guided field walkthrough</h2>
       <p>Visual support while local guidance is prepared.</p>
     </div>
-    <div class="walkthrough-stage" data-board-image="/static/assets/walkthrough-apiary-board.webp" data-keeper-image="/static/assets/walkthrough-keeper-marker.webp" aria-hidden="true">
+    <div class="walkthrough-stage" data-board-image="/static/assets/walkthrough-apiary-board.webp" data-keeper-image="/static/assets/walkthrough-keeper-marker.webp" data-keeper-walk-sprite="/static/assets/walkthrough/keeper-walk-sprite.webp" data-keeper-inspect-sprite="/static/assets/walkthrough/keeper-inspect-sprite.webp" data-bee-sprite="/static/assets/walkthrough/bee-micro-sprite.webp" data-ant-sprite="/static/assets/walkthrough/ant-micro-sprite.webp" aria-hidden="true">
       <div class="walkthrough-camera">
         <div class="walkthrough-board"></div>
-        <span class="beekeeper-avatar">
+        <span class="beekeeper-avatar walkthrough-sprite walkthrough-sprite--keeper-walk">
           <span class="keeper-shadow"></span>
           <span class="keeper-marker"></span>
+          <span class="keeper-sprite keeper-sprite--walk"></span>
+          <span class="keeper-sprite keeper-sprite--inspect"></span>
         </span>
-        <span class="bee-dot bee-dot-one"></span>
-        <span class="bee-dot bee-dot-two"></span>
-        <span class="bee-dot bee-dot-three"></span>
-        <span class="ant-dot ant-dot-one"></span>
-        <span class="ant-dot ant-dot-two"></span>
-        <span class="ant-dot ant-dot-three"></span>
+        <span class="bee-dot bee-dot-one walkthrough-sprite walkthrough-sprite--bee"></span>
+        <span class="bee-dot bee-dot-two walkthrough-sprite walkthrough-sprite--bee"></span>
+        <span class="bee-dot bee-dot-three walkthrough-sprite walkthrough-sprite--bee"></span>
+        <span class="ant-dot ant-dot-one walkthrough-sprite walkthrough-sprite--ant"></span>
+        <span class="ant-dot ant-dot-two walkthrough-sprite walkthrough-sprite--ant"></span>
+        <span class="ant-dot ant-dot-three walkthrough-sprite walkthrough-sprite--ant"></span>
       </div>
     </div>
     <div class="walkthrough-status">

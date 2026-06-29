@@ -983,11 +983,13 @@ body {
 
 .walkthrough-stage {
   --camera-duration: 12.8s;
-  --keeper-size: clamp(22px, 4.8vw, 34px);
+  --keeper-size: clamp(42px, 7vw, 56px);
   --keeper-start-x: 50%;
   --keeper-start-y: 84%;
-  --keeper-shadow-width: 58%;
-  --keeper-shadow-height: 8%;
+  --keeper-shadow-width: 64%;
+  --keeper-shadow-height: 7%;
+  --bee-size: clamp(12px, 2.4vw, 18px);
+  --ant-size: clamp(10px, 2vw, 15px);
   position: relative;
   width: min(100%, 620px);
   aspect-ratio: 3 / 2;
@@ -1023,7 +1025,7 @@ body {
   left: var(--keeper-start-x);
   top: var(--keeper-start-y);
   width: var(--keeper-size);
-  aspect-ratio: 451 / 493;
+  aspect-ratio: 1;
   transform: translate3d(-50%, -100%, 0);
   transform-origin: 50% 100%;
   z-index: 2;
@@ -1033,8 +1035,19 @@ body {
   animation: keeper-route-board var(--camera-duration) ease-in-out infinite;
 }
 
+.walkthrough-sprite {
+  will-change: transform, background-position;
+}
+
+.walkthrough-sprite--keeper-walk,
+.walkthrough-sprite--bee,
+.walkthrough-sprite--ant {
+  pointer-events: none;
+}
+
 .keeper-marker,
-.keeper-shadow {
+.keeper-shadow,
+.keeper-sprite {
   position: absolute;
   display: block;
 }
@@ -1043,11 +1056,37 @@ body {
   inset: 0;
   background: url("/static/assets/walkthrough-keeper-marker.webp") center / contain no-repeat;
   filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.28));
+  opacity: 0;
   z-index: 2;
 }
 
-.hive-walkthrough.is-running .keeper-marker {
-  animation: keeper-bob 1.9s ease-in-out infinite;
+.keeper-sprite {
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.28));
+  z-index: 3;
+}
+
+.keeper-sprite--walk {
+  background-image: url("/static/assets/walkthrough/keeper-walk-sprite.webp");
+}
+
+.keeper-sprite--inspect {
+  background-image: url("/static/assets/walkthrough/keeper-inspect-sprite.webp");
+  opacity: 0;
+}
+
+.hive-walkthrough.is-running .keeper-sprite--walk {
+  animation:
+    keeper-walk-frames 0.92s steps(8) infinite,
+    keeper-walk-visibility var(--camera-duration) step-end infinite;
+}
+
+.hive-walkthrough.is-running .keeper-sprite--inspect {
+  animation:
+    keeper-inspect-frames 0.86s steps(4) infinite,
+    keeper-inspect-visibility var(--camera-duration) step-end infinite;
 }
 
 .keeper-shadow {
@@ -1070,57 +1109,72 @@ body {
 .ant-dot {
   position: absolute;
   display: block;
-  border-radius: 999px;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  image-rendering: auto;
+  z-index: 3;
 }
 
 .bee-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(255, 244, 213, 0.18);
+  width: var(--bee-size);
+  height: var(--bee-size);
+  background-image: url("/static/assets/walkthrough/bee-micro-sprite.webp");
+  filter: drop-shadow(0 2px 2px rgba(18, 9, 5, 0.26));
 }
 
 .bee-dot-one {
   right: 39%;
   top: 42%;
-  animation: bee-loop-one 2.8s ease-in-out infinite;
+  animation:
+    bee-sprite-frames 0.62s steps(6) infinite,
+    bee-loop-one 2.8s ease-in-out infinite;
 }
 
 .bee-dot-two {
   right: 34%;
   top: 49%;
-  animation: bee-loop-two 3.3s ease-in-out infinite;
+  animation:
+    bee-sprite-frames 0.68s steps(6) infinite,
+    bee-loop-two 3.3s ease-in-out infinite;
 }
 
 .bee-dot-three {
   right: 43%;
   top: 52%;
-  animation: bee-loop-three 3.8s ease-in-out infinite;
+  animation:
+    bee-sprite-frames 0.74s steps(6) infinite,
+    bee-loop-three 3.8s ease-in-out infinite;
 }
 
 .ant-dot {
-  width: 5px;
-  height: 5px;
-  background: #241006;
-  border: 1px solid rgba(255, 232, 179, 0.32);
+  width: var(--ant-size);
+  height: var(--ant-size);
+  background-image: url("/static/assets/walkthrough/ant-micro-sprite.webp");
+  filter: drop-shadow(0 1px 1px rgba(255, 232, 179, 0.1));
 }
 
 .ant-dot-one {
   right: 40%;
   bottom: 42%;
-  animation: ant-trail 3s linear infinite;
+  animation:
+    ant-sprite-frames 0.76s steps(6) infinite,
+    ant-trail 3s linear infinite;
 }
 
 .ant-dot-two {
   right: 44%;
   bottom: 40%;
-  animation: ant-trail 3s linear 0.7s infinite;
+  animation:
+    ant-sprite-frames 0.76s steps(6) infinite,
+    ant-trail 3s linear 0.7s infinite;
 }
 
 .ant-dot-three {
   right: 48%;
   bottom: 41%;
-  animation: ant-trail 3s linear 1.4s infinite;
+  animation:
+    ant-sprite-frames 0.76s steps(6) infinite,
+    ant-trail 3s linear 1.4s infinite;
 }
 
 .walkthrough-status {
@@ -1271,6 +1325,50 @@ body {
   50% { transform: translateY(-2px); }
 }
 
+@keyframes keeper-walk-frames {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
+@keyframes keeper-inspect-frames {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
+@keyframes keeper-walk-visibility {
+  0%,
+  17%,
+  31%,
+  45%,
+  59%,
+  73%,
+  87%,
+  100% { opacity: 1; }
+  18%,
+  30%,
+  46%,
+  58%,
+  74%,
+  86% { opacity: 0; }
+}
+
+@keyframes keeper-inspect-visibility {
+  0%,
+  17%,
+  31%,
+  45%,
+  59%,
+  73%,
+  87%,
+  100% { opacity: 0; }
+  18%,
+  30%,
+  46%,
+  58%,
+  74%,
+  86% { opacity: 1; }
+}
+
 @keyframes keeper-shadow {
   0%,
   100% { opacity: 0.72; transform: translateY(14%) scaleX(1); }
@@ -1302,6 +1400,11 @@ body {
   50% { transform: translate(-24px, -14px); }
 }
 
+@keyframes bee-sprite-frames {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
 @keyframes bee-loop-two {
   0%,
   100% { transform: translate(0, 0); }
@@ -1319,6 +1422,31 @@ body {
   30%,
   80% { opacity: 1; }
   100% { transform: translateX(34px); opacity: 0.18; }
+}
+
+@keyframes ant-sprite-frames {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hive-walkthrough.is-running .walkthrough-camera,
+  .hive-walkthrough.is-running .beekeeper-avatar,
+  .hive-walkthrough.is-running .keeper-sprite--walk,
+  .hive-walkthrough.is-running .keeper-sprite--inspect,
+  .hive-walkthrough.is-running .keeper-shadow,
+  .hive-walkthrough.is-running .bee-dot,
+  .hive-walkthrough.is-running .ant-dot {
+    animation: none;
+  }
+
+  .hive-walkthrough.is-running .keeper-sprite--walk {
+    opacity: 1;
+  }
+
+  .hive-walkthrough.is-running .keeper-sprite--inspect {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 700px) {
