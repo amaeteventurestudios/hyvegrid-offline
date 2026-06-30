@@ -393,6 +393,7 @@ class WebAppTests(unittest.TestCase):
             self.assertNotIn(removed, css)
 
     def test_hive_health_post_valid_calls_answer_and_displays(self):
+        expected_llama_bin, _model_path = _advisor_runtime_paths()
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:
             resp = self.client.post(
                 "/advisor/hive-health", data={"question": self.HIVE_QUESTION}
@@ -401,7 +402,7 @@ class WebAppTests(unittest.TestCase):
         m.assert_called_once_with(
             self.HIVE_QUESTION,
             model_path="model.gguf",
-            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+            llama_bin=expected_llama_bin,
         )
         self.assertIn("example field answer", resp.text)
         self.assertIn("Completed locally", resp.text)
@@ -428,6 +429,7 @@ class WebAppTests(unittest.TestCase):
         )
 
     def test_hive_health_yoruba_mode_uses_controlled_template(self):
+        expected_llama_bin, _model_path = _advisor_runtime_paths()
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:
             resp = self.client.post(
                 "/advisor/hive-health?lang=yo", data={"question": self.HIVE_QUESTION}
@@ -436,7 +438,7 @@ class WebAppTests(unittest.TestCase):
         m.assert_called_once_with(
             self.HIVE_QUESTION,
             model_path="model.gguf",
-            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+            llama_bin=expected_llama_bin,
         )
         for needle in [
             "Àwọn template ìtọ́nisọ́nà Yorùbá",
@@ -543,13 +545,14 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("Example prompt", resp.text)
         self.assertNotIn("Completed locally", resp.text)
         # POST valid: calls answer_question and renders answer + sources.
+        expected_llama_bin, _model_path = _advisor_runtime_paths()
         with mock.patch("app.web_app.answer_question", return_value=bundle) as m:
             resp = self.client.post(f"/advisor/{slug}", data={"question": question})
         self.assertEqual(resp.status_code, 200)
         m.assert_called_once_with(
             question,
             model_path="model.gguf",
-            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+            llama_bin=expected_llama_bin,
         )
         self.assertIn(marker, resp.text)
         self.assertIn("Completed locally", resp.text)
@@ -627,6 +630,7 @@ class WebAppTests(unittest.TestCase):
         self.assertNotIn("Completed locally", resp.text)
 
     def test_site_readiness_post_valid_calls_answer_and_displays(self):
+        expected_llama_bin, _model_path = _advisor_runtime_paths()
         with mock.patch("app.web_app.answer_question", return_value=self._fake_site_bundle()) as m:
             resp = self.client.post(
                 "/advisor/site-readiness", data={"question": self.SITE_QUESTION}
@@ -635,7 +639,7 @@ class WebAppTests(unittest.TestCase):
         m.assert_called_once_with(
             self.SITE_QUESTION,
             model_path="model.gguf",
-            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+            llama_bin=expected_llama_bin,
         )
         self.assertIn("example site answer", resp.text)
         self.assertIn("Completed locally", resp.text)

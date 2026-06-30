@@ -27,6 +27,7 @@ LOGGER = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LLAMA_BIN = "/home/amaete/llama.cpp/build/bin/llama-cli"
 DEFAULT_MODEL_PATH = "model.gguf"
+LLAMA_BIN_ENV = "LLAMA_BIN"
 
 
 def _to_text(value) -> str:
@@ -50,13 +51,65 @@ def resolve_runtime_path(path: str) -> str:
     return os.path.abspath(candidate)
 
 
+def llama_bin_candidates(configured_path: str = DEFAULT_LLAMA_BIN) -> list[str]:
+    """Return local llama-cli candidates in resolver order."""
+    candidates = []
+    env_path = os.environ.get(LLAMA_BIN_ENV)
+    if env_path:
+        candidates.append(env_path)
+    candidates.extend(
+        [
+            configured_path,
+            "$HOME/llama.cpp/build/bin/llama-cli",
+            "./llama.cpp/build/bin/llama-cli",
+            "/opt/homebrew/bin/llama-cli",
+            "/usr/local/bin/llama-cli",
+        ]
+    )
+
+    resolved = []
+    seen = set()
+    for candidate in candidates:
+        path = candidate.replace("$HOME", str(Path.home()))
+        path = resolve_runtime_path(path)
+        if path not in seen:
+            resolved.append(path)
+            seen.add(path)
+    return resolved
+
+
+def resolve_llama_bin(configured_path: str = DEFAULT_LLAMA_BIN) -> dict:
+    """Resolve a local executable llama-cli path without downloading/building."""
+    checked_paths = llama_bin_candidates(configured_path)
+    for path in checked_paths:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return {"llama_bin": path, "checked_paths": checked_paths, "found": True}
+    return {"llama_bin": None, "checked_paths": checked_paths, "found": False}
+
+
+def llama_bin_not_found_message(checked_paths: list[str]) -> str:
+    """Build a clear local setup error for missing llama.cpp binaries."""
+    checked = "\n".join(f"- {path}" for path in checked_paths)
+    return (
+        "llama.cpp binary not found. Checked paths:\n"
+        f"{checked}\n"
+        'Mac fix: export LLAMA_BIN="$HOME/llama.cpp/build/bin/llama-cli"\n'
+        'Ubuntu/VM fix: export LLAMA_BIN="/home/amaete/llama.cpp/build/bin/llama-cli"'
+    )
+
+
 def runtime_diagnostics(
     model_path: str = DEFAULT_MODEL_PATH,
     llama_bin: str = DEFAULT_LLAMA_BIN,
 ) -> dict:
     """Return path diagnostics for server logs and focused tests."""
     resolved_model_path = resolve_runtime_path(model_path)
-    resolved_llama_bin = resolve_runtime_path(llama_bin)
+    resolved = resolve_llama_bin(llama_bin)
+    resolved_llama_bin = resolved["llama_bin"] or (
+        resolved["checked_paths"][0]
+        if resolved["checked_paths"]
+        else resolve_runtime_path(llama_bin)
+    )
     return {
         "repo_root": str(REPO_ROOT),
         "model_path": resolved_model_path,
@@ -64,6 +117,8 @@ def runtime_diagnostics(
         "llama_bin": resolved_llama_bin,
         "llama_exists": os.path.isfile(resolved_llama_bin),
         "llama_executable": os.access(resolved_llama_bin, os.X_OK),
+        "llama_checked_paths": resolved["checked_paths"],
+        "llama_found": resolved["found"],
     }
 
 
@@ -233,19 +288,17 @@ def run_llama_prompt(
 
     Raises RuntimeError if the llama binary or model file is missing.
     """
-    resolved_llama_bin = resolve_runtime_path(llama_bin)
+    resolved = resolve_llama_bin(llama_bin)
+    resolved_llama_bin = resolved["llama_bin"]
     resolved_model_path = resolve_runtime_path(model_path)
     log_runtime_diagnostics(
         model_path=resolved_model_path,
-        llama_bin=resolved_llama_bin,
+        llama_bin=resolved_llama_bin or llama_bin,
         level=logging.INFO,
     )
 
-    if not os.path.isfile(resolved_llama_bin):
-        raise RuntimeError(
-            f"llama.cpp binary not found at {resolved_llama_bin!r}. "
-            "Build llama.cpp and check the path."
-        )
+    if not resolved_llama_bin:
+        raise RuntimeError(llama_bin_not_found_message(resolved["checked_paths"]))
     if not os.path.isfile(resolved_model_path):
         raise RuntimeError(
             f"Model file not found at {resolved_model_path!r}. "

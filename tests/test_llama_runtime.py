@@ -6,6 +6,7 @@ binary are never required.
 """
 
 import re
+import os
 import subprocess
 import sys
 import unittest
@@ -64,7 +65,8 @@ class RunLlamaPromptTests(unittest.TestCase):
 
     @mock.patch("app.llama_runtime.subprocess.run")
     @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
-    def test_builds_expected_subprocess_command(self, _isfile, run_mock):
+    @mock.patch("app.llama_runtime.os.access", return_value=True)
+    def test_builds_expected_subprocess_command(self, _access, _isfile, run_mock):
         run_mock.return_value = self._fake_proc(stdout="possible concern")
         result = rt.run_llama_prompt(
             "PROMPT",
@@ -98,7 +100,8 @@ class RunLlamaPromptTests(unittest.TestCase):
 
     @mock.patch("app.llama_runtime.subprocess.run")
     @mock.patch("app.llama_runtime.os.path.isfile", side_effect=lambda p: p == "/bin/llama-cli")
-    def test_missing_model_raises(self, _isfile, run_mock):
+    @mock.patch("app.llama_runtime.os.access", side_effect=lambda p, mode: p == "/bin/llama-cli")
+    def test_missing_model_raises(self, _access, _isfile, run_mock):
         with self.assertRaises(RuntimeError) as ctx:
             rt.run_llama_prompt(
                 "p", model_path="model/missing.gguf", llama_bin="/bin/llama-cli"
@@ -108,7 +111,8 @@ class RunLlamaPromptTests(unittest.TestCase):
 
     @mock.patch("app.llama_runtime.subprocess.run")
     @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
-    def test_timeout_returns_useful_info(self, _isfile, run_mock):
+    @mock.patch("app.llama_runtime.os.access", return_value=True)
+    def test_timeout_returns_useful_info(self, _access, _isfile, run_mock):
         run_mock.side_effect = subprocess.TimeoutExpired(
             cmd=[], timeout=1, output="partial", stderr=""
         )
@@ -120,7 +124,8 @@ class RunLlamaPromptTests(unittest.TestCase):
 
     @mock.patch("app.llama_runtime.subprocess.run")
     @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
-    def test_nonzero_exit_returns_error_info(self, _isfile, run_mock):
+    @mock.patch("app.llama_runtime.os.access", return_value=True)
+    def test_nonzero_exit_returns_error_info(self, _access, _isfile, run_mock):
         run_mock.return_value = self._fake_proc(
             stdout="", returncode=1, stderr="model load failed"
         )
@@ -131,7 +136,8 @@ class RunLlamaPromptTests(unittest.TestCase):
 
     @mock.patch("app.llama_runtime.subprocess.run")
     @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
-    def test_no_network_flags_in_command(self, _isfile, run_mock):
+    @mock.patch("app.llama_runtime.os.access", return_value=True)
+    def test_no_network_flags_in_command(self, _access, _isfile, run_mock):
         run_mock.return_value = self._fake_proc()
         rt.run_llama_prompt("p")
         cmd = run_mock.call_args[0][0]
@@ -309,18 +315,58 @@ class NoCloudApiTests(unittest.TestCase):
         self.assertTrue(resolved.endswith("/model.gguf"))
         self.assertTrue(Path(resolved).is_absolute())
 
-    def test_runtime_diagnostics_reports_configured_paths(self):
-        diagnostics = rt.runtime_diagnostics(
-            model_path="model.gguf",
-            llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+    def test_llama_bin_candidates_include_mac_and_vm_paths(self):
+        candidates = rt.llama_bin_candidates()
+        self.assertIn("/home/amaete/llama.cpp/build/bin/llama-cli", candidates)
+        self.assertIn(str(Path.home() / "llama.cpp/build/bin/llama-cli"), candidates)
+        self.assertIn(str(rt.REPO_ROOT / "llama.cpp/build/bin/llama-cli"), candidates)
+        self.assertIn("/opt/homebrew/bin/llama-cli", candidates)
+        self.assertIn("/usr/local/bin/llama-cli", candidates)
+
+    def test_resolve_llama_bin_uses_first_executable_candidate(self):
+        def isfile(path):
+            return path == "/opt/homebrew/bin/llama-cli"
+
+        def access(path, mode):
+            return path == "/opt/homebrew/bin/llama-cli" and mode == os.X_OK
+
+        with mock.patch.dict("os.environ", {}, clear=True), mock.patch(
+            "app.llama_runtime.os.path.isfile", side_effect=isfile
+        ), mock.patch("app.llama_runtime.os.access", side_effect=access):
+            resolved = rt.resolve_llama_bin()
+        self.assertTrue(resolved["found"])
+        self.assertEqual(resolved["llama_bin"], "/opt/homebrew/bin/llama-cli")
+
+    def test_missing_llama_bin_message_lists_fixes(self):
+        message = rt.llama_bin_not_found_message(["/missing/llama-cli"])
+        self.assertIn("/missing/llama-cli", message)
+        self.assertIn('export LLAMA_BIN="$HOME/llama.cpp/build/bin/llama-cli"', message)
+        self.assertIn(
+            'export LLAMA_BIN="/home/amaete/llama.cpp/build/bin/llama-cli"',
+            message,
         )
-        self.assertTrue(diagnostics["repo_root"].endswith("hyvegrid-offline"))
+
+    def test_runtime_diagnostics_reports_configured_paths(self):
+        with mock.patch.dict("os.environ", {}, clear=True), mock.patch(
+            "app.llama_runtime.os.path.isfile", return_value=False
+        ), mock.patch("app.llama_runtime.os.access", return_value=False):
+            diagnostics = rt.runtime_diagnostics(
+                model_path="model.gguf",
+                llama_bin="/home/amaete/llama.cpp/build/bin/llama-cli",
+            )
+        self.assertIn("hyvegrid-offline", diagnostics["repo_root"])
         self.assertTrue(diagnostics["model_path"].endswith("/model.gguf"))
         self.assertEqual(
             diagnostics["llama_bin"],
             "/home/amaete/llama.cpp/build/bin/llama-cli",
         )
-        for key in ["model_exists", "llama_exists", "llama_executable"]:
+        for key in [
+            "model_exists",
+            "llama_exists",
+            "llama_executable",
+            "llama_checked_paths",
+            "llama_found",
+        ]:
             self.assertIn(key, diagnostics)
 
 
