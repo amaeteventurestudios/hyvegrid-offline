@@ -54,6 +54,19 @@ class BuildCommandTests(unittest.TestCase):
         self.assertEqual(cmd[cmd.index("-t") + 1], "2")
         self.assertEqual(cmd[cmd.index("--temp") + 1], "0.3")
 
+    def test_command_includes_extra_args_before_model(self):
+        cmd = rt._build_command(
+            llama_bin="/bin/llama-cli",
+            model_path="model/x.gguf",
+            prompt="hello bees",
+            max_tokens=128,
+            temperature=0.3,
+            threads=2,
+            extra_args=["--device", "none", "-ngl", "0"],
+        )
+        self.assertEqual(cmd[:5], ["/bin/llama-cli", "--device", "none", "-ngl", "0"])
+        self.assertLess(cmd.index("-ngl"), cmd.index("-m"))
+
 
 class RunLlamaPromptTests(unittest.TestCase):
     """Mock subprocess + filesystem so no real model/binary is needed."""
@@ -133,6 +146,19 @@ class RunLlamaPromptTests(unittest.TestCase):
         self.assertEqual(result["returncode"], 1)
         self.assertEqual(result["answer"], "")
         self.assertIn("model load failed", result["stderr"])
+
+    @mock.patch("app.llama_runtime.subprocess.run")
+    @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
+    @mock.patch("app.llama_runtime.os.access", return_value=True)
+    def test_metal_crash_returns_setup_hint(self, _access, _isfile, run_mock):
+        run_mock.return_value = self._fake_proc(
+            stdout="",
+            returncode=-6,
+            stderr="GGML_ASSERT(buf_src) failed\nlibggml-metal",
+        )
+        result = rt.run_llama_prompt("p")
+        self.assertIn("Intel macOS", result["setup_hint"])
+        self.assertIn("LLAMA_EXTRA_ARGS", result["setup_hint"])
 
     @mock.patch("app.llama_runtime.subprocess.run")
     @mock.patch("app.llama_runtime.os.path.isfile", return_value=True)
@@ -336,6 +362,41 @@ class NoCloudApiTests(unittest.TestCase):
             resolved = rt.resolve_llama_bin()
         self.assertTrue(resolved["found"])
         self.assertEqual(resolved["llama_bin"], "/opt/homebrew/bin/llama-cli")
+
+    def test_intel_macos_default_extra_args(self):
+        with mock.patch.dict("os.environ", {}, clear=True), mock.patch(
+            "app.llama_runtime.platform.system", return_value="Darwin"
+        ), mock.patch("app.llama_runtime.platform.machine", return_value="x86_64"):
+            resolved = rt.resolve_llama_extra_args()
+        self.assertEqual(resolved["args"], ["--device", "none", "-ngl", "0"])
+        self.assertEqual(resolved["source"], "intel-macos-default")
+        self.assertTrue(resolved["intel_macos_fallback"])
+
+    def test_ubuntu_default_has_no_extra_args(self):
+        with mock.patch.dict("os.environ", {}, clear=True), mock.patch(
+            "app.llama_runtime.platform.system", return_value="Linux"
+        ), mock.patch("app.llama_runtime.platform.machine", return_value="x86_64"):
+            resolved = rt.resolve_llama_extra_args()
+        self.assertEqual(resolved["args"], [])
+        self.assertEqual(resolved["source"], "none")
+        self.assertFalse(resolved["intel_macos_fallback"])
+
+    def test_llama_extra_args_override_intel_macos_default(self):
+        with mock.patch.dict(
+            "os.environ", {"LLAMA_EXTRA_ARGS": "--threads-batch 1"}, clear=True
+        ), mock.patch("app.llama_runtime.platform.system", return_value="Darwin"), mock.patch(
+            "app.llama_runtime.platform.machine", return_value="x86_64"
+        ):
+            resolved = rt.resolve_llama_extra_args()
+        self.assertEqual(resolved["args"], ["--threads-batch", "1"])
+        self.assertEqual(resolved["source"], "LLAMA_EXTRA_ARGS")
+        self.assertFalse(resolved["intel_macos_fallback"])
+
+    def test_llama_extra_args_parse_error_is_clear(self):
+        with mock.patch.dict("os.environ", {"LLAMA_EXTRA_ARGS": '"unterminated'}, clear=True):
+            with self.assertRaises(RuntimeError) as ctx:
+                rt.resolve_llama_extra_args()
+        self.assertIn("LLAMA_EXTRA_ARGS could not be parsed", str(ctx.exception))
 
     def test_missing_llama_bin_message_lists_fixes(self):
         message = rt.llama_bin_not_found_message(["/missing/llama-cli"])

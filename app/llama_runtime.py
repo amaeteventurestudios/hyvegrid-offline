@@ -16,7 +16,9 @@ Contract:
 
 import logging
 import os
+import platform
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -28,6 +30,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LLAMA_BIN = "/home/amaete/llama.cpp/build/bin/llama-cli"
 DEFAULT_MODEL_PATH = "model.gguf"
 LLAMA_BIN_ENV = "LLAMA_BIN"
+LLAMA_EXTRA_ARGS_ENV = "LLAMA_EXTRA_ARGS"
+INTEL_MAC_CPU_ARGS = ["--device", "none", "-ngl", "0"]
+INTEL_MAC_CPU_HINT = 'On Intel macOS, try LLAMA_EXTRA_ARGS="--device none -ngl 0".'
 
 
 def _to_text(value) -> str:
@@ -98,6 +103,57 @@ def llama_bin_not_found_message(checked_paths: list[str]) -> str:
     )
 
 
+def is_intel_macos() -> bool:
+    """Return True for Intel macOS local development hosts."""
+    machine = platform.machine().lower()
+    return platform.system() == "Darwin" and machine in {"x86_64", "i386", "i686"}
+
+
+def resolve_llama_extra_args() -> dict:
+    """Resolve safe llama-cli extra args without invoking a shell."""
+    raw_extra = os.environ.get(LLAMA_EXTRA_ARGS_ENV)
+    if raw_extra:
+        try:
+            args = shlex.split(raw_extra)
+        except ValueError as exc:
+            raise RuntimeError(
+                f"{LLAMA_EXTRA_ARGS_ENV} could not be parsed: {exc}"
+            ) from exc
+        return {
+            "args": args,
+            "source": LLAMA_EXTRA_ARGS_ENV,
+            "raw": raw_extra,
+            "intel_macos_fallback": False,
+        }
+    if is_intel_macos():
+        return {
+            "args": list(INTEL_MAC_CPU_ARGS),
+            "source": "intel-macos-default",
+            "raw": "",
+            "intel_macos_fallback": True,
+        }
+    return {
+        "args": [],
+        "source": "none",
+        "raw": "",
+        "intel_macos_fallback": False,
+    }
+
+
+def llama_crash_setup_hint(stdout: str, stderr: str, returncode) -> str:
+    """Return an Intel macOS setup hint for known Metal/ggml crash output."""
+    combined = f"{stdout}\n{stderr}".lower()
+    if (
+        "ggml_assert" in combined
+        or "libggml-metal" in combined
+        or "buf_src" in combined
+        or "metal" in combined
+        or returncode in {-6, 134}
+    ):
+        return INTEL_MAC_CPU_HINT
+    return ""
+
+
 def runtime_diagnostics(
     model_path: str = DEFAULT_MODEL_PATH,
     llama_bin: str = DEFAULT_LLAMA_BIN,
@@ -119,6 +175,7 @@ def runtime_diagnostics(
         "llama_executable": os.access(resolved_llama_bin, os.X_OK),
         "llama_checked_paths": resolved["checked_paths"],
         "llama_found": resolved["found"],
+        "llama_extra_args": resolve_llama_extra_args(),
     }
 
 
@@ -133,13 +190,16 @@ def log_runtime_diagnostics(
     LOGGER.log(
         level,
         "HyveGrid runtime diagnostics: repo_root=%s model_path=%s "
-        "model_exists=%s llama_bin=%s llama_exists=%s llama_executable=%s",
+        "model_exists=%s llama_bin=%s llama_exists=%s llama_executable=%s "
+        "llama_extra_args_source=%s llama_extra_args=%s",
         diagnostics["repo_root"],
         diagnostics["model_path"],
         diagnostics["model_exists"],
         diagnostics["llama_bin"],
         diagnostics["llama_exists"],
         diagnostics["llama_executable"],
+        diagnostics["llama_extra_args"]["source"],
+        diagnostics["llama_extra_args"]["args"],
     )
     return diagnostics
 
@@ -233,6 +293,7 @@ def _build_command(
     max_tokens: int,
     temperature: float,
     threads: int,
+    extra_args=None,
 ) -> list:
     """Build the llama-cli argv list.
 
@@ -249,6 +310,7 @@ def _build_command(
     """
     return [
         llama_bin,
+        *(extra_args or []),
         "-m", model_path,
         "-p", prompt,
         "-n", str(max_tokens),
@@ -305,8 +367,15 @@ def run_llama_prompt(
             "Download or link the GGUF model and check the path."
         )
 
+    extra_args = resolve_llama_extra_args()
     command = _build_command(
-        resolved_llama_bin, resolved_model_path, prompt, max_tokens, temperature, threads
+        resolved_llama_bin,
+        resolved_model_path,
+        prompt,
+        max_tokens,
+        temperature,
+        threads,
+        extra_args=extra_args["args"],
     )
 
     result = {
@@ -316,6 +385,8 @@ def run_llama_prompt(
         "returncode": None,
         "model_path": resolved_model_path,
         "llama_bin": resolved_llama_bin,
+        "llama_extra_args": extra_args["args"],
+        "setup_hint": "",
         "timed_out": False,
     }
 
@@ -340,6 +411,16 @@ def run_llama_prompt(
     result["returncode"] = proc.returncode
     if proc.returncode == 0:
         result["answer"] = clean_llama_output(result["stdout"])
+    else:
+        result["setup_hint"] = llama_crash_setup_hint(
+            result["stdout"], result["stderr"], proc.returncode
+        )
+        if result["setup_hint"]:
+            LOGGER.error(
+                "llama.cpp local setup hint after returncode=%s: %s",
+                proc.returncode,
+                result["setup_hint"],
+            )
 
     return result
 

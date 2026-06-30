@@ -12,8 +12,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.llama_runtime import (  # noqa: E402
     DEFAULT_LLAMA_BIN,
+    INTEL_MAC_CPU_ARGS,
     LLAMA_BIN_ENV,
+    LLAMA_EXTRA_ARGS_ENV,
+    is_intel_macos,
     llama_bin_not_found_message,
+    resolve_llama_extra_args,
     resolve_llama_bin,
 )
 
@@ -29,6 +33,7 @@ def main() -> int:
 
     print("HyveGrid local runtime diagnostics")
     print(f"platform: {platform.platform()}")
+    print(f"machine: {platform.machine()}")
     print(f"python: {sys.executable}")
     print(f"repo_root: {REPO_ROOT}")
     print(f"LLAMA_BIN set: {LLAMA_BIN_ENV in os.environ}")
@@ -48,6 +53,20 @@ def main() -> int:
         print("llama-cli exists: False")
         print("llama-cli executable: False")
         print(llama_bin_not_found_message(resolved["checked_paths"]))
+
+    try:
+        extra = resolve_llama_extra_args()
+    except RuntimeError as exc:
+        print(f"runtime extra args error: {exc}")
+        return 1
+    print(f"{LLAMA_EXTRA_ARGS_ENV} set: {LLAMA_EXTRA_ARGS_ENV in os.environ}")
+    if os.environ.get(LLAMA_EXTRA_ARGS_ENV):
+        print(f"{LLAMA_EXTRA_ARGS_ENV} value: {os.environ[LLAMA_EXTRA_ARGS_ENV]}")
+    print(f"Intel macOS detected: {is_intel_macos()}")
+    print(f"Intel macOS CPU-only fallback args: {' '.join(INTEL_MAC_CPU_ARGS)}")
+    print(f"Intel macOS CPU-only fallback applies: {extra['intel_macos_fallback']}")
+    print(f"final llama extra args source: {extra['source']}")
+    print(f"final llama extra args: {' '.join(extra['args']) if extra['args'] else '(none)'}")
 
     print("model file checks:")
     for model_path in [
