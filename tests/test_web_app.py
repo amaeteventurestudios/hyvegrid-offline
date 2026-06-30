@@ -17,6 +17,8 @@ if str(_REPO_ROOT) not in sys.path:
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.web_app import (  # noqa: E402
+    HA_FIELD_PHRASES,
+    SW_FIELD_PHRASES,
     app,
     _advisor_runtime_paths,
     _runtime_error_message,
@@ -97,8 +99,10 @@ class WebAppTests(unittest.TestCase):
         self.assertIn('<select id="language-select"', resp.text)
         self.assertIn('<option value="/" selected>English</option>', resp.text)
         self.assertIn('<option value="/?lang=yo" >Yorùbá</option>', resp.text)
-        self.assertIn('<option value="/?lang=ha" >Hausa Preview</option>', resp.text)
-        self.assertIn('<option value="/?lang=sw" >Swahili Preview</option>', resp.text)
+        self.assertIn('<option value="/?lang=ha" >Hausa</option>', resp.text)
+        self.assertIn('<option value="/?lang=sw" >Swahili</option>', resp.text)
+        self.assertNotIn("Hausa Preview", resp.text)
+        self.assertNotIn("Swahili Preview", resp.text)
 
     def test_mission_control_yoruba_mode_labels_and_glossary(self):
         resp = self.client.get("/?lang=yo")
@@ -116,34 +120,34 @@ class WebAppTests(unittest.TestCase):
             self.assertIn(needle, resp.text)
         self.assertIn('<option value="/" >Gẹ̀ẹ́sì</option>', resp.text)
         self.assertIn('<option value="/?lang=yo" selected>Yorùbá</option>', resp.text)
-        self.assertIn('<option value="/?lang=ha" >Hausa Preview</option>', resp.text)
-        self.assertIn('<option value="/?lang=sw" >Swahili Preview</option>', resp.text)
+        self.assertIn('<option value="/?lang=ha" >Hausa</option>', resp.text)
+        self.assertIn('<option value="/?lang=sw" >Swahili</option>', resp.text)
         self.assertIn("mission-control-page", resp.text)
 
-    def test_mission_control_preview_language_scaffolds(self):
+    def test_mission_control_structured_language_modes(self):
         cases = [
             (
                 "ha",
-                "Hausa preview. Key field guidance is structured",
-                "Hausa preview glossary placeholder",
-                '<option value="/?lang=ha" selected>Hausa Preview</option>',
+                "Structured field mode. Human language review recommended",
+                "Hausa structured field glossary",
+                '<option value="/?lang=ha" selected>Hausa</option>',
             ),
             (
                 "sw",
-                "Swahili preview. Key field guidance is structured",
-                "Swahili preview glossary placeholder",
-                '<option value="/?lang=sw" selected>Swahili Preview</option>',
+                "Structured field mode. Human language review recommended",
+                "Swahili structured field glossary",
+                '<option value="/?lang=sw" selected>Swahili</option>',
             ),
         ]
         for lang, note, glossary, selected in cases:
             resp = self.client.get(f"/?lang={lang}")
             self.assertEqual(resp.status_code, 200)
             self.assertIn(note, resp.text)
-            self.assertIn("full", resp.text.lower())
-            self.assertIn("language review is still needed", resp.text)
+            self.assertIn("Human language review recommended", resp.text)
             self.assertIn(glossary, resp.text)
             self.assertIn(selected, resp.text)
             self.assertNotIn("fully " + "supported", resp.text.lower())
+            self.assertNotIn("human-reviewed", resp.text.lower())
 
     def test_language_dropdown_uses_same_page_urls(self):
         resp = self.client.get("/advisor/hive-health?lang=yo")
@@ -157,11 +161,11 @@ class WebAppTests(unittest.TestCase):
             resp.text,
         )
         self.assertIn(
-            '<option value="/advisor/hive-health?lang=ha" >Hausa Preview</option>',
+            '<option value="/advisor/hive-health?lang=ha" >Hausa</option>',
             resp.text,
         )
         self.assertIn(
-            '<option value="/advisor/hive-health?lang=sw" >Swahili Preview</option>',
+            '<option value="/advisor/hive-health?lang=sw" >Swahili</option>',
             resp.text,
         )
 
@@ -169,8 +173,8 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn('<option value="/status" selected>English</option>', resp.text)
         self.assertIn('<option value="/status?lang=yo" >Yorùbá</option>', resp.text)
-        self.assertIn('<option value="/status?lang=ha" >Hausa Preview</option>', resp.text)
-        self.assertIn('<option value="/status?lang=sw" >Swahili Preview</option>', resp.text)
+        self.assertIn('<option value="/status?lang=ha" >Hausa</option>', resp.text)
+        self.assertIn('<option value="/status?lang=sw" >Swahili</option>', resp.text)
 
     def test_status_returns_200(self):
         resp = self.client.get("/status")
@@ -335,7 +339,6 @@ class WebAppTests(unittest.TestCase):
                 "Network required:",
                 "Hausa",
                 "Swahili",
-                "Preview",
                 "Working locally...",
                 "data-local-runtime-loading",
                 "data-submit-label",
@@ -405,17 +408,23 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("Yorùbá", resp.text)
         self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
 
-    def test_advisor_preview_language_routes_render_without_crashing(self):
-        for lang, label, note in [
-            ("ha", "Hausa Preview", "Hausa preview. Key field guidance is structured"),
-            ("sw", "Swahili Preview", "Swahili preview. Key field guidance is structured"),
+    def test_advisor_structured_language_routes_render_without_crashing(self):
+        for lang, label, note, phrases in [
+            ("ha", "Hausa", "Structured field mode. Human language review recommended", HA_FIELD_PHRASES),
+            ("sw", "Swahili", "Structured field mode. Human language review recommended", SW_FIELD_PHRASES),
         ]:
             resp = self.client.get(f"/advisor/hive-health?lang={lang}")
             self.assertEqual(resp.status_code, 200)
             self.assertIn(label, resp.text)
             self.assertIn(note, resp.text)
-            self.assertIn("Preparing local guidance...", resp.text)
+            self.assertIn("Human language review recommended", resp.text)
+            self.assertIn(phrases["preparing_local_guidance"]["text"], resp.text)
+            self.assertIn(phrases["working_locally"]["text"], resp.text)
+            self.assertIn(phrases["local_apiculture_notes"]["text"], resp.text)
+            self.assertIn(phrases["local_gguf_model"]["text"], resp.text)
             self.assertIn(f'<option value="/advisor/hive-health?lang={lang}" selected>{label}</option>', resp.text)
+            self.assertNotIn("Hausa Preview", resp.text)
+            self.assertNotIn("Swahili Preview", resp.text)
 
     def test_local_guidance_css_renders_waiting_state(self):
         css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
@@ -506,11 +515,11 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("/static/assets/card-hive-health.webp", resp.text)
         self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
 
-    def test_hive_health_preview_languages_use_controlled_labels(self):
+    def test_hive_health_structured_languages_use_controlled_labels(self):
         expected_llama_bin, _model_path = _advisor_runtime_paths()
-        for lang, label, note in [
-            ("ha", "Hausa Preview", "Hausa preview. Key field guidance is structured"),
-            ("sw", "Swahili Preview", "Swahili preview. Key field guidance is structured"),
+        for lang, label, note, phrases in [
+            ("ha", "Hausa", "Structured field mode. Human language review recommended", HA_FIELD_PHRASES),
+            ("sw", "Swahili", "Structured field mode. Human language review recommended", SW_FIELD_PHRASES),
         ]:
             with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:
                 resp = self.client.post(
@@ -526,16 +535,42 @@ class WebAppTests(unittest.TestCase):
             for needle in [
                 label,
                 note,
+                "Human language review recommended",
                 "Reported observation",
-                "Possible concern",
-                "Check first",
-                "Avoid doing immediately",
+                phrases["possible_concern"]["text"],
+                phrases["check_first"]["text"],
+                phrases["avoid_immediately"]["text"],
+                phrases["confirm_physical_inspection"]["text"],
+                phrases["consult"]["text"],
                 "English model answer",
                 "example field answer",
-                "Preview field glossary",
+                "Structured field glossary",
             ]:
                 self.assertIn(needle, resp.text)
             self.assertNotIn("fully " + "supported", resp.text.lower())
+            self.assertNotIn("human-reviewed", resp.text.lower())
+
+    def test_structured_language_phrase_packs_are_review_marked(self):
+        for phrases in [HA_FIELD_PHRASES, SW_FIELD_PHRASES]:
+            for key in [
+                "possible_concern",
+                "check_first",
+                "avoid_immediately",
+                "confirm_physical_inspection",
+                "consult",
+                "preparing_local_guidance",
+                "working_locally",
+                "no_cloud_access",
+                "manual_observations",
+                "sample_edge_signal_inputs",
+                "local_apiculture_notes",
+                "local_gguf_model",
+                "offline_mode",
+                "completed_locally",
+            ]:
+                self.assertIn(key, phrases)
+                self.assertTrue(phrases[key]["review_needed"])
+                self.assertTrue(phrases[key]["text"])
 
     def test_hive_health_post_displays_sources(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()):

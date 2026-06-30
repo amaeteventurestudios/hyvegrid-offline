@@ -35,8 +35,8 @@
     <div class="local-guidance-head">
       <span class="local-guidance-spinner" aria-hidden="true"></span>
       <div>
-        <h2>Preparing local guidance...</h2>
-        <p>Working locally on your question. No cloud access.</p>
+        <h2>{{ local_guidance_text.preparing_local_guidance }}</h2>
+        <p>{{ local_guidance_text.working_locally }} {{ local_guidance_text.no_cloud_access }}</p>
       </div>
     </div>
     <ol class="local-guidance-steps">
@@ -47,7 +47,7 @@
       </li>
       <li>
         <span class="local-guidance-step-index is-complete" aria-hidden="true">✓</span>
-        <span>Searching local apiculture notes</span>
+        <span>Searching {{ local_guidance_text.local_apiculture_notes }}</span>
         <strong>Completed</strong>
       </li>
       <li>
@@ -57,7 +57,7 @@
       </li>
       <li>
         <span class="local-guidance-step-index" aria-hidden="true"></span>
-        <span>Running local GGUF model through llama.cpp</span>
+        <span>Running {{ local_guidance_text.local_gguf_model }} through llama.cpp</span>
         <strong>Active</strong>
       </li>
     </ol>
@@ -65,13 +65,13 @@
     <div class="local-guidance-grid">
       <section class="local-guidance-card">
         <h3>Need visual support?</h3>
-        <p>You can review manual observations or provide sample edge-signal inputs while local guidance is prepared.</p>
+        <p>You can review {{ local_guidance_text.manual_observations }} or provide {{ local_guidance_text.sample_edge_signal_inputs }} while local guidance is prepared.</p>
         <button type="button">Open field resources</button>
       </section>
       <section class="local-guidance-card">
         <h3>Local system status</h3>
         <dl class="local-guidance-status-list">
-          <div><dt>Offline mode:</dt><dd>On</dd></div>
+          <div><dt>{{ local_guidance_text.offline_mode }}:</dt><dd>On</dd></div>
           <div><dt>Local model:</dt><dd>Configured</dd></div>
           <div><dt>Retrieval source:</dt><dd>Local notes</dd></div>
           <div><dt>Network required:</dt><dd>No</dd></div>
@@ -83,8 +83,8 @@
       <div>
         <button type="button" class="is-active">English</button>
         <button type="button">Yorùbá</button>
-        <button type="button">Hausa <span>Preview</span></button>
-        <button type="button">Swahili <span>Preview</span></button>
+        <button type="button">Hausa</button>
+        <button type="button">Swahili</button>
       </div>
     </div>
   </section>
@@ -118,8 +118,8 @@
 
 {% if is_yoruba %}
 <p class="review-note">{{ yo_review_note }}</p>
-{% elif is_preview_language %}
-<p class="review-note">{{ preview_review_note }}</p>
+{% elif is_structured_field_language %}
+<p class="review-note">{{ structured_review_note }}</p>
 {% endif %}
 
 {% if validation_error %}
@@ -147,9 +147,9 @@
     {% endfor %}
   </div>
   <h2>{{ text.english_answer }}</h2>
-  {% elif is_preview_language %}
+  {% elif is_structured_field_language %}
   <h2>{{ language_options | selectattr("selected") | map(attribute="label") | first }}</h2>
-  <p class="review-note">{{ preview_review_note }}</p>
+  <p class="review-note">{{ structured_review_note }}</p>
   <div class="controlled-template">
     {% for key, heading in controlled_headings %}
     <section>
@@ -181,7 +181,7 @@
 </section>
 {% endif %}
 
-{% if glossary and (is_yoruba or is_preview_language) %}
+{% if glossary and (is_yoruba or is_structured_field_language) %}
 <section class="glossary glossary-compact advisor-panel">
   <h2>{{ text.glossary }}</h2>
   {% for group in glossary %}

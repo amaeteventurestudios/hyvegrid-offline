@@ -15,7 +15,7 @@ It serves localhost only, uses no cloud services, and loads no GGUF model at
 import time. The status values are drawn from completed profiler/runtime
 evidence. The wired advisors call answer_question() on submit, which runs the
 model. Yoruba mode uses controlled UI labels, glossary terms, and template
-headings; Hausa and Swahili preview modes use controlled labels only. These
+headings; Hausa and Swahili structured modes use controlled labels only. These
 modes do not ask Granite to freestyle translation.
 
 Run with:
@@ -67,10 +67,10 @@ APP_DESCRIPTION = (
 )
 
 LANGUAGES = {
-    "en": {"code": "en", "name": "English", "native": "English", "preview": False},
-    "yo": {"code": "yo", "name": "Yoruba", "native": "Yorùbá", "preview": False},
-    "ha": {"code": "ha", "name": "Hausa", "native": "Hausa", "preview": True},
-    "sw": {"code": "sw", "name": "Swahili", "native": "Swahili", "preview": True},
+    "en": {"code": "en", "name": "English", "native": "English", "structured": False},
+    "yo": {"code": "yo", "name": "Yoruba", "native": "Yorùbá", "structured": False},
+    "ha": {"code": "ha", "name": "Hausa", "native": "Hausa", "structured": True},
+    "sw": {"code": "sw", "name": "Swahili", "native": "Swahili", "structured": True},
 }
 
 ACTIVE_LANGUAGE_CODES = ("en", "yo", "ha", "sw")
@@ -80,15 +80,13 @@ YO_REVIEW_NOTE = (
     "be reviewed by a fluent Yoruba speaker before final submission."
 )
 
-PREVIEW_LANGUAGE_NOTES = {
-    "ha": (
-        "Hausa preview. Key field guidance is structured, but full Hausa "
-        "language review is still needed."
-    ),
-    "sw": (
-        "Swahili preview. Key field guidance is structured, but full Swahili "
-        "language review is still needed."
-    ),
+STRUCTURED_LANGUAGE_NOTE = (
+    "Structured field mode. Human language review recommended before field deployment."
+)
+
+STRUCTURED_LANGUAGE_NOTES = {
+    "ha": STRUCTURED_LANGUAGE_NOTE,
+    "sw": STRUCTURED_LANGUAGE_NOTE,
 }
 
 UI_TEXT = {
@@ -119,7 +117,6 @@ UI_TEXT = {
         "yoruba": "Yorùbá",
         "hausa": "Hausa",
         "swahili": "Swahili",
-        "preview": "Preview",
         "available_now": "Available now",
         "planned_for_demo": "Planned for demo",
         "system_facts": "System facts",
@@ -154,7 +151,6 @@ UI_TEXT = {
         "yoruba": "Yorùbá",
         "hausa": "Hausa",
         "swahili": "Swahili",
-        "preview": "Preview",
         "available_now": "Ó wà báyìí",
         "planned_for_demo": "A pèsè fún ìfihàn",
         "system_facts": "Àwọn òtítọ́ nípa ẹ̀rọ",
@@ -163,9 +159,9 @@ UI_TEXT = {
     },
 }
 
-for _preview_code in ("ha", "sw"):
-    UI_TEXT[_preview_code] = dict(UI_TEXT["en"])
-    UI_TEXT[_preview_code]["glossary"] = "Preview field glossary"
+for _structured_code in ("ha", "sw"):
+    UI_TEXT[_structured_code] = dict(UI_TEXT["en"])
+    UI_TEXT[_structured_code]["glossary"] = "Structured field glossary"
 
 YO_CONTROLLED_HEADINGS = [
     ("field_observation_summary", "Àkótán ohun tí a rí ní pápá"),
@@ -206,31 +202,147 @@ YO_CONTROLLED_GUIDANCE = {
     ),
 }
 
-PREVIEW_CONTROLLED_HEADINGS = {
+HA_FIELD_PHRASES = {
+    "possible_concern": {
+        "text": "Abin da zai iya zama matsala",
+        "review_needed": True,
+    },
+    "check_first": {"text": "Abin da za a fara dubawa", "review_needed": True},
+    "avoid_immediately": {
+        "text": "Abin da ba za a yi nan da nan ba",
+        "review_needed": True,
+    },
+    "confirm_physical_inspection": {
+        "text": "Tabbatar ta hanyar duba amya kai tsaye",
+        "review_needed": True,
+    },
+    "consult": {
+        "text": "Tuntuɓi ƙwararren mai kiwon zuma ko jami’in faɗaɗa ilimi",
+        "review_needed": True,
+    },
+    "preparing_local_guidance": {
+        "text": "Ana shirya jagorar gida",
+        "review_needed": True,
+    },
+    "working_locally": {
+        "text": "Ana aiki da tambayarka a cikin na’urar",
+        "review_needed": True,
+    },
+    "no_cloud_access": {"text": "Babu amfani da gajimare", "review_needed": True},
+    "manual_observations": {
+        "text": "Abubuwan da aka gani da hannu",
+        "review_needed": True,
+    },
+    "sample_edge_signal_inputs": {
+        "text": "Misalan bayanan sigina daga na’urar gefe",
+        "review_needed": True,
+    },
+    "local_apiculture_notes": {
+        "text": "Bayanan kiwon zuma na gida",
+        "review_needed": True,
+    },
+    "local_gguf_model": {
+        "text": "Samfurin GGUF na gida",
+        "review_needed": True,
+    },
+    "offline_mode": {
+        "text": "Yanayin aiki ba tare da intanet ba",
+        "review_needed": True,
+    },
+    "completed_locally": {
+        "text": "An kammala a cikin na’urar",
+        "review_needed": True,
+    },
+}
+
+SW_FIELD_PHRASES = {
+    "possible_concern": {
+        "text": "Wasiwasi unaowezekana",
+        "review_needed": True,
+    },
+    "check_first": {"text": "Kagua kwanza", "review_needed": True},
+    "avoid_immediately": {
+        "text": "Epuka kufanya mara moja",
+        "review_needed": True,
+    },
+    "confirm_physical_inspection": {
+        "text": "Thibitisha kwa ukaguzi wa moja kwa moja",
+        "review_needed": True,
+    },
+    "consult": {
+        "text": "Wasiliana na mfugaji nyuki mwenye uzoefu au afisa ugani",
+        "review_needed": True,
+    },
+    "preparing_local_guidance": {
+        "text": "Inaandaa mwongozo wa ndani",
+        "review_needed": True,
+    },
+    "working_locally": {
+        "text": "Inashughulikia swali lako ndani ya kifaa",
+        "review_needed": True,
+    },
+    "no_cloud_access": {
+        "text": "Hakuna matumizi ya huduma za mtandaoni",
+        "review_needed": True,
+    },
+    "manual_observations": {
+        "text": "Uchunguzi wa moja kwa moja",
+        "review_needed": True,
+    },
+    "sample_edge_signal_inputs": {
+        "text": "Mfano wa maingizo ya ishara za kifaa cha pembeni",
+        "review_needed": True,
+    },
+    "local_apiculture_notes": {
+        "text": "Vidokezo vya ndani vya ufugaji nyuki",
+        "review_needed": True,
+    },
+    "local_gguf_model": {
+        "text": "Muundo wa ndani wa GGUF",
+        "review_needed": True,
+    },
+    "offline_mode": {
+        "text": "Hali ya nje ya mtandao",
+        "review_needed": True,
+    },
+    "completed_locally": {
+        "text": "Imekamilika ndani ya kifaa",
+        "review_needed": True,
+    },
+}
+
+STRUCTURED_FIELD_PHRASES = {
+    "ha": HA_FIELD_PHRASES,
+    "sw": SW_FIELD_PHRASES,
+}
+
+STRUCTURED_CONTROLLED_HEADINGS = {
     "ha": [
-        ("preview_note", "Hausa Preview"),
+        ("structured_note", "Hausa"),
         ("field_observation_summary", "Reported observation"),
-        ("possible_concern", "Possible concern"),
-        ("check_first", "Check first"),
-        ("avoid_immediately", "Avoid doing immediately"),
+        ("possible_concern", HA_FIELD_PHRASES["possible_concern"]["text"]),
+        ("check_first", HA_FIELD_PHRASES["check_first"]["text"]),
+        ("avoid_immediately", HA_FIELD_PHRASES["avoid_immediately"]["text"]),
         ("next_safe_action", "Suggested next step"),
-        ("consult", "When to consult"),
+        ("confirm_physical_inspection", HA_FIELD_PHRASES["confirm_physical_inspection"]["text"]),
+        ("consult", HA_FIELD_PHRASES["consult"]["text"]),
     ],
     "sw": [
-        ("preview_note", "Swahili Preview"),
+        ("structured_note", "Swahili"),
         ("field_observation_summary", "Reported observation"),
-        ("possible_concern", "Possible concern"),
-        ("check_first", "Check first"),
-        ("avoid_immediately", "Avoid doing immediately"),
+        ("possible_concern", SW_FIELD_PHRASES["possible_concern"]["text"]),
+        ("check_first", SW_FIELD_PHRASES["check_first"]["text"]),
+        ("avoid_immediately", SW_FIELD_PHRASES["avoid_immediately"]["text"]),
         ("next_safe_action", "Suggested next step"),
-        ("consult", "When to consult"),
+        ("confirm_physical_inspection", SW_FIELD_PHRASES["confirm_physical_inspection"]["text"]),
+        ("consult", SW_FIELD_PHRASES["consult"]["text"]),
     ],
 }
 
-PREVIEW_CONTROLLED_GUIDANCE = {
-    "preview_note": (
-        "This preview uses controlled labels around the English model answer. "
-        "Full language review is still needed."
+STRUCTURED_CONTROLLED_GUIDANCE = {
+    "structured_note": (
+        "This structured field mode uses controlled labels around the English "
+        "model answer. Human language review is recommended before field deployment."
     ),
     "field_observation_summary": (
         "Use the submitted field question as the reported observation summary."
@@ -239,6 +351,9 @@ PREVIEW_CONTROLLED_GUIDANCE = {
     "check_first": "Confirm by physical inspection before deciding on a cause.",
     "avoid_immediately": "Avoid strong treatments or major changes without evidence.",
     "next_safe_action": "Record what is seen, then take the next cautious field step.",
+    "confirm_physical_inspection": (
+        "Confirm by physical inspection before deciding on a cause."
+    ),
     "consult": "Consult an experienced beekeeper or extension officer when needed.",
 }
 
@@ -309,25 +424,37 @@ YO_GLOSSARY = [
     },
 ]
 
-PREVIEW_GLOSSARY = {
+STRUCTURED_GLOSSARY = {
     "ha": [
         {
-            "localized_category": "Hausa preview glossary placeholder",
+            "localized_category": "Hausa structured field glossary",
             "terms": [
-                ("possible concern", "controlled preview label"),
-                ("check first", "controlled preview label"),
-                ("avoid doing immediately", "controlled preview label"),
+                ("possible concern", HA_FIELD_PHRASES["possible_concern"]["text"]),
+                ("check first", HA_FIELD_PHRASES["check_first"]["text"]),
+                ("avoid doing immediately", HA_FIELD_PHRASES["avoid_immediately"]["text"]),
+                (
+                    "confirm by physical inspection",
+                    HA_FIELD_PHRASES["confirm_physical_inspection"]["text"],
+                ),
+                ("offline mode", HA_FIELD_PHRASES["offline_mode"]["text"]),
             ],
+            "review_needed": True,
         }
     ],
     "sw": [
         {
-            "localized_category": "Swahili preview glossary placeholder",
+            "localized_category": "Swahili structured field glossary",
             "terms": [
-                ("possible concern", "controlled preview label"),
-                ("check first", "controlled preview label"),
-                ("avoid doing immediately", "controlled preview label"),
+                ("possible concern", SW_FIELD_PHRASES["possible_concern"]["text"]),
+                ("check first", SW_FIELD_PHRASES["check_first"]["text"]),
+                ("avoid doing immediately", SW_FIELD_PHRASES["avoid_immediately"]["text"]),
+                (
+                    "confirm by physical inspection",
+                    SW_FIELD_PHRASES["confirm_physical_inspection"]["text"],
+                ),
+                ("offline mode", SW_FIELD_PHRASES["offline_mode"]["text"]),
             ],
+            "review_needed": True,
         }
     ],
 }
@@ -422,7 +549,7 @@ AT_A_GLANCE = [
     ("GGUF model", "Locked Granite 3.3 2B Instruct Q4_K_M candidate."),
     ("SQLite FTS5 retrieval", "Public apiculture notes remain local."),
     ("Yoruba mode", "Primary controlled labels, glossary, and English fallback."),
-    ("Hausa and Swahili preview", "Controlled preview labels; full language review still needed."),
+    ("Hausa and Swahili", "Structured field labels; human language review recommended."),
     ("Public challenge edition", "No proprietary hardware, sensor IP, or private data."),
 ]
 
@@ -741,6 +868,37 @@ def _localized_guidance_cards(lang: str) -> list[dict]:
     return cards
 
 
+def _phrase_text(lang: str, key: str, fallback: str) -> str:
+    phrase = STRUCTURED_FIELD_PHRASES.get(lang, {}).get(key)
+    return phrase["text"] if phrase else fallback
+
+
+def _local_guidance_text(lang: str) -> dict:
+    return {
+        "preparing_local_guidance": _phrase_text(
+            lang, "preparing_local_guidance", "Preparing local guidance..."
+        ),
+        "working_locally": _phrase_text(
+            lang, "working_locally", "Working locally on your question."
+        ),
+        "no_cloud_access": _phrase_text(lang, "no_cloud_access", "No cloud access."),
+        "manual_observations": _phrase_text(
+            lang, "manual_observations", "manual observations"
+        ),
+        "sample_edge_signal_inputs": _phrase_text(
+            lang, "sample_edge_signal_inputs", "sample edge-signal inputs"
+        ),
+        "local_apiculture_notes": _phrase_text(
+            lang, "local_apiculture_notes", "local apiculture notes"
+        ),
+        "local_gguf_model": _phrase_text(
+            lang, "local_gguf_model", "local GGUF model"
+        ),
+        "offline_mode": _phrase_text(lang, "offline_mode", "Offline mode"),
+        "completed_locally": _phrase_text(lang, "completed_locally", RUNTIME_OK),
+    }
+
+
 def _base_context(request: Request) -> dict:
     lang = _lang_from_request(request)
     text = UI_TEXT[lang]
@@ -752,27 +910,28 @@ def _base_context(request: Request) -> dict:
                 if code == "en"
                 else text["yoruba"]
                 if code == "yo"
-                else f"{text['hausa']} {text['preview']}"
+                else text["hausa"]
                 if code == "ha"
-                else f"{text['swahili']} {text['preview']}"
+                else text["swahili"]
             ),
             "url": _url_with_lang(request.url.path, code),
             "selected": code == lang,
         }
         for code in ACTIVE_LANGUAGE_CODES
     ]
-    is_preview_language = bool(LANGUAGES[lang].get("preview"))
+    is_structured_field_language = bool(LANGUAGES[lang].get("structured"))
     language_review_note = ""
     if lang == "yo":
         language_review_note = YO_REVIEW_NOTE
-    elif is_preview_language:
-        language_review_note = PREVIEW_LANGUAGE_NOTES[lang]
+    elif is_structured_field_language:
+        language_review_note = STRUCTURED_LANGUAGE_NOTES[lang]
     return {
         "lang": lang,
         "html_lang": lang if lang in {"yo", "ha", "sw"} else "en",
         "text": text,
         "is_yoruba": lang == "yo",
-        "is_preview_language": is_preview_language,
+        "is_preview_language": is_structured_field_language,
+        "is_structured_field_language": is_structured_field_language,
         "lang_en_url": _url_with_lang(request.url.path, "en"),
         "lang_yo_url": _url_with_lang(request.url.path, "yo"),
         "language_options": language_options,
@@ -781,7 +940,10 @@ def _base_context(request: Request) -> dict:
         "not_diagnosis": NOT_DIAGNOSIS,
         "yo_review_note": YO_REVIEW_NOTE,
         "language_review_note": language_review_note,
-        "preview_review_note": PREVIEW_LANGUAGE_NOTES.get(lang, ""),
+        "preview_review_note": STRUCTURED_LANGUAGE_NOTES.get(lang, ""),
+        "structured_review_note": STRUCTURED_LANGUAGE_NOTES.get(lang, ""),
+        "field_phrases": STRUCTURED_FIELD_PHRASES.get(lang, {}),
+        "local_guidance_text": _local_guidance_text(lang),
     }
 
 
@@ -809,12 +971,12 @@ def _advisor_context(request: Request, advisor: dict) -> dict:
         "controlled_headings": (
             YO_CONTROLLED_HEADINGS
             if lang == "yo"
-            else PREVIEW_CONTROLLED_HEADINGS.get(lang, [])
+            else STRUCTURED_CONTROLLED_HEADINGS.get(lang, [])
         ),
         "controlled_guidance": (
-            YO_CONTROLLED_GUIDANCE if lang == "yo" else PREVIEW_CONTROLLED_GUIDANCE
+            YO_CONTROLLED_GUIDANCE if lang == "yo" else STRUCTURED_CONTROLLED_GUIDANCE
         ),
-        "glossary": YO_GLOSSARY if lang == "yo" else PREVIEW_GLOSSARY.get(lang, []),
+        "glossary": YO_GLOSSARY if lang == "yo" else STRUCTURED_GLOSSARY.get(lang, []),
     })
     return ctx
 
@@ -905,7 +1067,7 @@ async def _submit_advisor_question(request: Request, advisor: dict) -> HTMLRespo
 
     ctx["answer"] = answer
     ctx["sources"] = bundle.get("results") or []
-    ctx["runtime_ok"] = RUNTIME_OK
+    ctx["runtime_ok"] = ctx["local_guidance_text"]["completed_locally"]
     return TEMPLATES.TemplateResponse(request, "advisor_form.html", ctx)
 
 
@@ -1003,7 +1165,7 @@ async def mission_control(request: Request) -> HTMLResponse:
         "mission_assets": MISSION_ASSETS,
         "guidance_cards": _localized_guidance_cards(lang),
         "at_a_glance": AT_A_GLANCE,
-        "glossary": YO_GLOSSARY if lang == "yo" else PREVIEW_GLOSSARY.get(lang, []),
+        "glossary": YO_GLOSSARY if lang == "yo" else STRUCTURED_GLOSSARY.get(lang, []),
     })
     return TEMPLATES.TemplateResponse(
         request,
