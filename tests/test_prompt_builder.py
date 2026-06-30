@@ -18,6 +18,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from app.retrieval import build_database  # noqa: E402
 from app.prompt_builder import (  # noqa: E402
+    UNSUPPORTED_ASSUMPTION_GUARD,
     build_hyvegrid_prompt,
     build_prompt_with_retrieval,
     build_system_instructions,
@@ -109,6 +110,37 @@ class PromptBuilderUnitTests(unittest.TestCase):
         instructions = build_system_instructions()
         self.assertIn("HyveGrid Offline", instructions)
         self.assertIn("offline apiculture field assistant", instructions)
+
+    def test_prompt_contains_unsupported_assumption_guard(self):
+        lowered = self.prompt.lower()
+        normalized = " ".join(lowered.split())
+        for phrase in [
+            "unsupported-assumption guard",
+            "use only reported observations and retrieved local notes",
+            "distinguish reported observation, possible concern, check first",
+            "do not state that eggs, larvae, queen, stores, mites, disease",
+        ]:
+            self.assertIn(phrase, lowered)
+        self.assertIn(
+            "unless the user reported it or the retrieved source explicitly supports it",
+            normalized,
+        )
+
+    def test_hive_health_prompt_says_check_eggs_and_larvae_not_assume_absent(self):
+        self.assertIn(
+            "Check whether eggs and young larvae are present.",
+            self.prompt,
+        )
+        self.assertIn(
+            "Confirm by physical inspection whether eggs and young larvae are present",
+            self.prompt,
+        )
+        self.assertIn('"no eggs"', self.prompt)
+        self.assertIn('"no young brood"', self.prompt)
+        self.assertIn("unless explicitly reported", self.prompt)
+
+    def test_assumption_guard_constant_is_in_system_instructions(self):
+        self.assertIn(UNSUPPORTED_ASSUMPTION_GUARD, build_system_instructions())
 
 
 class PromptBuilderRetrievalTests(unittest.TestCase):

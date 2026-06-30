@@ -32,6 +32,26 @@ Keep wording cautious and practical. If the retrieved notes do not cover the
 situation, say what to inspect next instead of pretending certainty."""
 
 
+UNSUPPORTED_ASSUMPTION_GUARD = """Unsupported-assumption guard:
+
+- Use only reported observations and retrieved local notes.
+- Distinguish reported observation, possible concern, check first, and avoid
+  doing immediately.
+- Do not state that eggs, larvae, queen, stores, mites, disease, robbing, or
+  brood condition are absent or present unless the user reported it or the
+  retrieved source explicitly supports it.
+- Phrase uncertain findings as checks, for example:
+  "Check whether eggs and young larvae are present."
+  "Check whether ants are only near the stand or entering the hive."
+  "Check whether food stores and pollen are sufficient."
+- For partially capped brood, say:
+  "Confirm by physical inspection whether eggs and young larvae are present and
+  whether the brood pattern is solid."
+- Do not say "no eggs", "no young brood", "queen absent", "mite infestation",
+  "virus", or "disease" unless explicitly reported or carefully framed as a
+  possible concern requiring inspection."""
+
+
 def build_system_instructions() -> str:
     """Return the cautious system instruction block for the assistant.
 
@@ -59,7 +79,9 @@ def build_system_instructions() -> str:
         "\n"
         "Do not invent proprietary sensor data, private datasets, partner "
         "details, or cloud results. If the provided context is insufficient, say "
-        "what to inspect next instead of pretending certainty."
+        "what to inspect next instead of pretending certainty.\n"
+        "\n"
+        f"{UNSUPPORTED_ASSUMPTION_GUARD}"
     )
 
 
