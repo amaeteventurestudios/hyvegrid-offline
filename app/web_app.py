@@ -15,14 +15,15 @@ It serves localhost only, uses no cloud services, and loads no GGUF model at
 import time. The status values are drawn from completed profiler/runtime
 evidence. The wired advisors call answer_question() on submit, which runs the
 model. Yoruba mode uses controlled UI labels, glossary terms, and template
-headings; it does not ask Granite to freestyle Yoruba.
+headings; Hausa and Swahili preview modes use controlled labels only. These
+modes do not ask Granite to freestyle translation.
 
 Run with:
     python3 -m app.web_app
 or:
     python3 scripts/run_web_app.py
 
-Then open http://127.0.0.1:8000
+Then open localhost on port 8000.
 """
 
 import asyncio
@@ -66,16 +67,29 @@ APP_DESCRIPTION = (
 )
 
 LANGUAGES = {
-    "en": {"code": "en", "name": "English", "native": "English"},
-    "yo": {"code": "yo", "name": "Yoruba", "native": "Yorùbá"},
+    "en": {"code": "en", "name": "English", "native": "English", "preview": False},
+    "yo": {"code": "yo", "name": "Yoruba", "native": "Yorùbá", "preview": False},
+    "ha": {"code": "ha", "name": "Hausa", "native": "Hausa", "preview": True},
+    "sw": {"code": "sw", "name": "Swahili", "native": "Swahili", "preview": True},
 }
 
-ACTIVE_LANGUAGE_CODES = ("en", "yo")
+ACTIVE_LANGUAGE_CODES = ("en", "yo", "ha", "sw")
 
 YO_REVIEW_NOTE = (
     "Yoruba field labels and templates are controlled draft support and should "
     "be reviewed by a fluent Yoruba speaker before final submission."
 )
+
+PREVIEW_LANGUAGE_NOTES = {
+    "ha": (
+        "Hausa preview. Key field guidance is structured, but full Hausa "
+        "language review is still needed."
+    ),
+    "sw": (
+        "Swahili preview. Key field guidance is structured, but full Swahili "
+        "language review is still needed."
+    ),
+}
 
 UI_TEXT = {
     "en": {
@@ -103,6 +117,9 @@ UI_TEXT = {
         "language": "Language",
         "english": "English",
         "yoruba": "Yorùbá",
+        "hausa": "Hausa",
+        "swahili": "Swahili",
+        "preview": "Preview",
         "available_now": "Available now",
         "planned_for_demo": "Planned for demo",
         "system_facts": "System facts",
@@ -135,6 +152,9 @@ UI_TEXT = {
         "language": "Èdè",
         "english": "Gẹ̀ẹ́sì",
         "yoruba": "Yorùbá",
+        "hausa": "Hausa",
+        "swahili": "Swahili",
+        "preview": "Preview",
         "available_now": "Ó wà báyìí",
         "planned_for_demo": "A pèsè fún ìfihàn",
         "system_facts": "Àwọn òtítọ́ nípa ẹ̀rọ",
@@ -142,6 +162,10 @@ UI_TEXT = {
         "accuracy_status": "Ipò ìpéye",
     },
 }
+
+for _preview_code in ("ha", "sw"):
+    UI_TEXT[_preview_code] = dict(UI_TEXT["en"])
+    UI_TEXT[_preview_code]["glossary"] = "Preview field glossary"
 
 YO_CONTROLLED_HEADINGS = [
     ("field_observation_summary", "Àkótán ohun tí a rí ní pápá"),
@@ -180,6 +204,42 @@ YO_CONTROLLED_GUIDANCE = {
         "Ìdáhùn kikún ti módẹ́lì wà ní Gẹ̀ẹ́sì ní isalẹ. Àwọn gbolohun Yorùbá "
         "wọ̀nyí jẹ́ template tó ní ààbò, kì í ṣe ìtumọ̀ aládàáṣiṣẹ́."
     ),
+}
+
+PREVIEW_CONTROLLED_HEADINGS = {
+    "ha": [
+        ("preview_note", "Hausa Preview"),
+        ("field_observation_summary", "Reported observation"),
+        ("possible_concern", "Possible concern"),
+        ("check_first", "Check first"),
+        ("avoid_immediately", "Avoid doing immediately"),
+        ("next_safe_action", "Suggested next step"),
+        ("consult", "When to consult"),
+    ],
+    "sw": [
+        ("preview_note", "Swahili Preview"),
+        ("field_observation_summary", "Reported observation"),
+        ("possible_concern", "Possible concern"),
+        ("check_first", "Check first"),
+        ("avoid_immediately", "Avoid doing immediately"),
+        ("next_safe_action", "Suggested next step"),
+        ("consult", "When to consult"),
+    ],
+}
+
+PREVIEW_CONTROLLED_GUIDANCE = {
+    "preview_note": (
+        "This preview uses controlled labels around the English model answer. "
+        "Full language review is still needed."
+    ),
+    "field_observation_summary": (
+        "Use the submitted field question as the reported observation summary."
+    ),
+    "possible_concern": "Treat this as a possible concern, not a final field conclusion.",
+    "check_first": "Confirm by physical inspection before deciding on a cause.",
+    "avoid_immediately": "Avoid strong treatments or major changes without evidence.",
+    "next_safe_action": "Record what is seen, then take the next cautious field step.",
+    "consult": "Consult an experienced beekeeper or extension officer when needed.",
 }
 
 YO_GLOSSARY = [
@@ -248,6 +308,29 @@ YO_GLOSSARY = [
         ],
     },
 ]
+
+PREVIEW_GLOSSARY = {
+    "ha": [
+        {
+            "localized_category": "Hausa preview glossary placeholder",
+            "terms": [
+                ("possible concern", "controlled preview label"),
+                ("check first", "controlled preview label"),
+                ("avoid doing immediately", "controlled preview label"),
+            ],
+        }
+    ],
+    "sw": [
+        {
+            "localized_category": "Swahili preview glossary placeholder",
+            "terms": [
+                ("possible concern", "controlled preview label"),
+                ("check first", "controlled preview label"),
+                ("avoid doing immediately", "controlled preview label"),
+            ],
+        }
+    ],
+}
 
 # Advisor modules are shown as navigation cards. They are planned for a later
 # demo phase and are not enabled in this English skeleton beyond a placeholder.
@@ -338,7 +421,8 @@ AT_A_GLANCE = [
     ("llama.cpp runtime", "Local GGUF inference path for advisor answers."),
     ("GGUF model", "Locked Granite 3.3 2B Instruct Q4_K_M candidate."),
     ("SQLite FTS5 retrieval", "Public apiculture notes remain local."),
-    ("Yoruba mode", "Controlled labels, glossary, and English fallback."),
+    ("Yoruba mode", "Primary controlled labels, glossary, and English fallback."),
+    ("Hausa and Swahili preview", "Controlled preview labels; full language review still needed."),
     ("Public challenge edition", "No proprietary hardware, sensor IP, or private data."),
 ]
 
@@ -347,7 +431,7 @@ STATUS_FACTS = [
     ("Model format", "GGUF"),
     ("Locked model", "Granite 3.3 2B Instruct Q4_K_M"),
     ("Profiler model path", "model.gguf"),
-    ("Local app mode", "localhost (http://127.0.0.1:8000)"),
+    ("Local app mode", "localhost on port 8000"),
     ("Retrieval", "SQLite FTS5 local knowledge base"),
     ("Network dependency during judged runtime", "none"),
     ("Public challenge edition", "yes"),
@@ -663,17 +747,32 @@ def _base_context(request: Request) -> dict:
     language_options = [
         {
             "code": code,
-            "label": text["english"] if code == "en" else text["yoruba"],
+            "label": (
+                text["english"]
+                if code == "en"
+                else text["yoruba"]
+                if code == "yo"
+                else f"{text['hausa']} {text['preview']}"
+                if code == "ha"
+                else f"{text['swahili']} {text['preview']}"
+            ),
             "url": _url_with_lang(request.url.path, code),
             "selected": code == lang,
         }
         for code in ACTIVE_LANGUAGE_CODES
     ]
+    is_preview_language = bool(LANGUAGES[lang].get("preview"))
+    language_review_note = ""
+    if lang == "yo":
+        language_review_note = YO_REVIEW_NOTE
+    elif is_preview_language:
+        language_review_note = PREVIEW_LANGUAGE_NOTES[lang]
     return {
         "lang": lang,
-        "html_lang": "yo" if lang == "yo" else "en",
+        "html_lang": lang if lang in {"yo", "ha", "sw"} else "en",
         "text": text,
         "is_yoruba": lang == "yo",
+        "is_preview_language": is_preview_language,
         "lang_en_url": _url_with_lang(request.url.path, "en"),
         "lang_yo_url": _url_with_lang(request.url.path, "yo"),
         "language_options": language_options,
@@ -681,6 +780,8 @@ def _base_context(request: Request) -> dict:
         "status_url": _url_with_lang("/status", lang),
         "not_diagnosis": NOT_DIAGNOSIS,
         "yo_review_note": YO_REVIEW_NOTE,
+        "language_review_note": language_review_note,
+        "preview_review_note": PREVIEW_LANGUAGE_NOTES.get(lang, ""),
     }
 
 
@@ -705,9 +806,15 @@ def _advisor_context(request: Request, advisor: dict) -> dict:
         "submitted_question": "",
         "walkthrough_steps": ADVISOR_WALKTHROUGH_STEPS[advisor["slug"]],
         "walkthrough_route_points": ADVISOR_ROUTE_POINTS[advisor["slug"]],
-        "controlled_headings": YO_CONTROLLED_HEADINGS if lang == "yo" else [],
-        "controlled_guidance": YO_CONTROLLED_GUIDANCE,
-        "glossary": YO_GLOSSARY if lang == "yo" else [],
+        "controlled_headings": (
+            YO_CONTROLLED_HEADINGS
+            if lang == "yo"
+            else PREVIEW_CONTROLLED_HEADINGS.get(lang, [])
+        ),
+        "controlled_guidance": (
+            YO_CONTROLLED_GUIDANCE if lang == "yo" else PREVIEW_CONTROLLED_GUIDANCE
+        ),
+        "glossary": YO_GLOSSARY if lang == "yo" else PREVIEW_GLOSSARY.get(lang, []),
     })
     return ctx
 
@@ -722,7 +829,7 @@ def _status_facts(lang: str) -> list[tuple[str, str]]:
         ("Model format", "GGUF"),
         (text["model_loaded"], "Granite 3.3 2B Instruct Q4_K_M"),
         ("Profiler model path", "model.gguf"),
-        (text["local_app"], "localhost (http://127.0.0.1:8000)"),
+        (text["local_app"], "localhost on port 8000"),
         ("Retrieval", "SQLite FTS5 local knowledge base"),
         (text["no_cloud_access"], "none during judged runtime"),
         (text["public_challenge_edition"], "yes"),
@@ -896,7 +1003,7 @@ async def mission_control(request: Request) -> HTMLResponse:
         "mission_assets": MISSION_ASSETS,
         "guidance_cards": _localized_guidance_cards(lang),
         "at_a_glance": AT_A_GLANCE,
-        "glossary": YO_GLOSSARY if lang == "yo" else [],
+        "glossary": YO_GLOSSARY if lang == "yo" else PREVIEW_GLOSSARY.get(lang, []),
     })
     return TEMPLATES.TemplateResponse(
         request,

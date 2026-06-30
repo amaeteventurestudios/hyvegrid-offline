@@ -97,6 +97,8 @@ class WebAppTests(unittest.TestCase):
         self.assertIn('<select id="language-select"', resp.text)
         self.assertIn('<option value="/" selected>English</option>', resp.text)
         self.assertIn('<option value="/?lang=yo" >Yorùbá</option>', resp.text)
+        self.assertIn('<option value="/?lang=ha" >Hausa Preview</option>', resp.text)
+        self.assertIn('<option value="/?lang=sw" >Swahili Preview</option>', resp.text)
 
     def test_mission_control_yoruba_mode_labels_and_glossary(self):
         resp = self.client.get("/?lang=yo")
@@ -114,7 +116,34 @@ class WebAppTests(unittest.TestCase):
             self.assertIn(needle, resp.text)
         self.assertIn('<option value="/" >Gẹ̀ẹ́sì</option>', resp.text)
         self.assertIn('<option value="/?lang=yo" selected>Yorùbá</option>', resp.text)
+        self.assertIn('<option value="/?lang=ha" >Hausa Preview</option>', resp.text)
+        self.assertIn('<option value="/?lang=sw" >Swahili Preview</option>', resp.text)
         self.assertIn("mission-control-page", resp.text)
+
+    def test_mission_control_preview_language_scaffolds(self):
+        cases = [
+            (
+                "ha",
+                "Hausa preview. Key field guidance is structured",
+                "Hausa preview glossary placeholder",
+                '<option value="/?lang=ha" selected>Hausa Preview</option>',
+            ),
+            (
+                "sw",
+                "Swahili preview. Key field guidance is structured",
+                "Swahili preview glossary placeholder",
+                '<option value="/?lang=sw" selected>Swahili Preview</option>',
+            ),
+        ]
+        for lang, note, glossary, selected in cases:
+            resp = self.client.get(f"/?lang={lang}")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(note, resp.text)
+            self.assertIn("full", resp.text.lower())
+            self.assertIn("language review is still needed", resp.text)
+            self.assertIn(glossary, resp.text)
+            self.assertIn(selected, resp.text)
+            self.assertNotIn("fully " + "supported", resp.text.lower())
 
     def test_language_dropdown_uses_same_page_urls(self):
         resp = self.client.get("/advisor/hive-health?lang=yo")
@@ -127,11 +156,21 @@ class WebAppTests(unittest.TestCase):
             '<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>',
             resp.text,
         )
+        self.assertIn(
+            '<option value="/advisor/hive-health?lang=ha" >Hausa Preview</option>',
+            resp.text,
+        )
+        self.assertIn(
+            '<option value="/advisor/hive-health?lang=sw" >Swahili Preview</option>',
+            resp.text,
+        )
 
         resp = self.client.get("/status")
         self.assertEqual(resp.status_code, 200)
         self.assertIn('<option value="/status" selected>English</option>', resp.text)
         self.assertIn('<option value="/status?lang=yo" >Yorùbá</option>', resp.text)
+        self.assertIn('<option value="/status?lang=ha" >Hausa Preview</option>', resp.text)
+        self.assertIn('<option value="/status?lang=sw" >Swahili Preview</option>', resp.text)
 
     def test_status_returns_200(self):
         resp = self.client.get("/status")
@@ -366,6 +405,18 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("Yorùbá", resp.text)
         self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
 
+    def test_advisor_preview_language_routes_render_without_crashing(self):
+        for lang, label, note in [
+            ("ha", "Hausa Preview", "Hausa preview. Key field guidance is structured"),
+            ("sw", "Swahili Preview", "Swahili preview. Key field guidance is structured"),
+        ]:
+            resp = self.client.get(f"/advisor/hive-health?lang={lang}")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(label, resp.text)
+            self.assertIn(note, resp.text)
+            self.assertIn("Preparing local guidance...", resp.text)
+            self.assertIn(f'<option value="/advisor/hive-health?lang={lang}" selected>{label}</option>', resp.text)
+
     def test_local_guidance_css_renders_waiting_state(self):
         css = (_REPO_ROOT / "app" / "static" / "style.css").read_text()
         for needle in [
@@ -454,6 +505,37 @@ class WebAppTests(unittest.TestCase):
         self.assertIn('body class="advisor-page advisor-hive-health"', resp.text)
         self.assertIn("/static/assets/card-hive-health.webp", resp.text)
         self.assertIn('<option value="/advisor/hive-health?lang=yo" selected>Yorùbá</option>', resp.text)
+
+    def test_hive_health_preview_languages_use_controlled_labels(self):
+        expected_llama_bin, _model_path = _advisor_runtime_paths()
+        for lang, label, note in [
+            ("ha", "Hausa Preview", "Hausa preview. Key field guidance is structured"),
+            ("sw", "Swahili Preview", "Swahili preview. Key field guidance is structured"),
+        ]:
+            with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()) as m:
+                resp = self.client.post(
+                    f"/advisor/hive-health?lang={lang}",
+                    data={"question": self.HIVE_QUESTION},
+                )
+            self.assertEqual(resp.status_code, 200)
+            m.assert_called_once_with(
+                self.HIVE_QUESTION,
+                model_path="model.gguf",
+                llama_bin=expected_llama_bin,
+            )
+            for needle in [
+                label,
+                note,
+                "Reported observation",
+                "Possible concern",
+                "Check first",
+                "Avoid doing immediately",
+                "English model answer",
+                "example field answer",
+                "Preview field glossary",
+            ]:
+                self.assertIn(needle, resp.text)
+            self.assertNotIn("fully " + "supported", resp.text.lower())
 
     def test_hive_health_post_displays_sources(self):
         with mock.patch("app.web_app.answer_question", return_value=self._fake_bundle()):

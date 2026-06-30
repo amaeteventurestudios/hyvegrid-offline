@@ -80,7 +80,7 @@
   <div class="mc-section-head">
     <p class="mc-kicker">Guidance at Your Fingertips</p>
     <h2>Guidance at Your Fingertips</h2>
-    <p>Compact field helpers for offline visits, Yoruba support, harvest handling, pesticide awareness, and forage planning.</p>
+    <p>Compact field helpers for offline visits, Yorùbá support, preview language scaffolds, harvest handling, pesticide awareness, and forage planning.</p>
   </div>
 
   <div class="mc-guide-grid">
@@ -117,21 +117,21 @@
   </div>
 </section>
 
-{% if is_yoruba %}
-<p class="review-note">{{ yo_review_note }}</p>
+{% if language_review_note %}
+<p class="review-note">{{ language_review_note }}</p>
 {% endif %}
 
-{% if is_yoruba %}
+{% if glossary and (is_yoruba or is_preview_language) %}
 <section class="glossary">
   <h2>{{ text.glossary }}</h2>
   {% for group in glossary %}
   <article class="glossary-group">
-    <h3>{{ group.yo_category }}</h3>
+    <h3>{{ group.localized_category | default(group.yo_category) }}</h3>
     <dl>
-      {% for english, yoruba in group.terms %}
+      {% for english, local_term in group.terms %}
       <div>
         <dt>{{ english }}</dt>
-        <dd>{{ yoruba }}</dd>
+        <dd>{{ local_term }}</dd>
       </div>
       {% endfor %}
     </dl>

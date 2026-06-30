@@ -118,6 +118,8 @@
 
 {% if is_yoruba %}
 <p class="review-note">{{ yo_review_note }}</p>
+{% elif is_preview_language %}
+<p class="review-note">{{ preview_review_note }}</p>
 {% endif %}
 
 {% if validation_error %}
@@ -132,6 +134,22 @@
 <section class="result advisor-panel">
   {% if is_yoruba %}
   <h2>Àwọn template ìtọ́nisọ́nà Yorùbá</h2>
+  <div class="controlled-template">
+    {% for key, heading in controlled_headings %}
+    <section>
+      <h3>{{ heading }}</h3>
+      {% if key == "field_observation_summary" and submitted_question %}
+      <p>{{ submitted_question }}</p>
+      {% else %}
+      <p>{{ controlled_guidance[key] }}</p>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+  <h2>{{ text.english_answer }}</h2>
+  {% elif is_preview_language %}
+  <h2>{{ language_options | selectattr("selected") | map(attribute="label") | first }}</h2>
+  <p class="review-note">{{ preview_review_note }}</p>
   <div class="controlled-template">
     {% for key, heading in controlled_headings %}
     <section>
@@ -163,17 +181,17 @@
 </section>
 {% endif %}
 
-{% if is_yoruba and glossary %}
+{% if glossary and (is_yoruba or is_preview_language) %}
 <section class="glossary glossary-compact advisor-panel">
   <h2>{{ text.glossary }}</h2>
   {% for group in glossary %}
   <article class="glossary-group">
-    <h3>{{ group.yo_category }}</h3>
+    <h3>{{ group.localized_category | default(group.yo_category) }}</h3>
     <dl>
-      {% for english, yoruba in group.terms[:3] %}
+      {% for english, local_term in group.terms[:3] %}
       <div>
         <dt>{{ english }}</dt>
-        <dd>{{ yoruba }}</dd>
+        <dd>{{ local_term }}</dd>
       </div>
       {% endfor %}
     </dl>
