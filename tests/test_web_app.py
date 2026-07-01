@@ -188,6 +188,7 @@ class WebAppTests(unittest.TestCase):
             "Granite 3.3 2B Instruct Q4_K_M",
             "model.gguf",
             "SQLite FTS5",
+            "Network required",
             "No local hidden-validation accuracy score is claimed.",
         ]:
             self.assertIn(needle, resp.text, f"Status page missing: {needle!r}")

@@ -560,7 +560,7 @@ STATUS_FACTS = [
     ("Profiler model path", "model.gguf"),
     ("Local app mode", "localhost on port 8000"),
     ("Retrieval", "SQLite FTS5 local knowledge base"),
-    ("Network dependency during judged runtime", "none"),
+    ("Network required", "No"),
     ("Public challenge edition", "yes"),
     ("Proprietary hardware or sensor IP included", "no"),
     ("Metadata email finalized", "yes"),
